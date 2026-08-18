@@ -1,0 +1,21 @@
+# Node
+node_modules/
+npm-debug.log*
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.venv_test/
+
+# Expo / React Native
+.expo/
+
+# OS
+.DS_Store
+Thumbs.db
