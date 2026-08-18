@@ -1,12 +1,14 @@
+import os
+import joblib
+import numpy as np
+
 from fastapi import FastAPI
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import WebSocket
+from sklearn.cluster import MiniBatchKMeans
 from src.routes.auth_routes import app as auth_router
 
-class Time(BaseModel):
-    name: str
-    time: float
     
 app = FastAPI()
 
@@ -19,6 +21,53 @@ app.add_middleware(
 )
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
+
+MODELOS_DIR = os.path.join("src", "userModel")
+WEIGHT = 18
+
+
+os.makedirs(MODELOS_DIR, exist_ok=True)
+
+baseModel = joblib.load(os.path.join("src", "model", "pomodoro.plk"))
+
+def getUserModel(userID: str):
+    return joblib.load(os.path.join(MODELOS_DIR, f"{userID}_pomodoro.plk"))
+
+def createUserModel(userID: str):
+    joblib.dump(baseModel, os.path.join(MODELOS_DIR, f"{userID}_pomodoro.plk"))
+    return getUserModel(userID)
+    
+def getCentroides(userID: str):
+    return getUserModel(userID).cluster_centers_
+
+def loadUserModel(userID: str):
+    if os.path.exists(os.path.join(MODELOS_DIR, f"{userID}_pomodoro.plk")):
+        return getUserModel(userID)
+    else:
+        return createUserModel(userID)
+
+
+@app.post("/api/fin_sesion/{userID}")
+async def updateModel (userID: str, pomodoro: int, totalTime: int, estresNvl: int):
+    model = loadUserModel(userID)
+    print(model._counts)
+    
+    model._counts[estresNvl] = WEIGHT 
+    model.partial_fit(np.array([[pomodoro, totalTime]]))
+    
+    print(model.cluster_centers_)
+    print(model._counts)
+    
+    joblib.dump(model, os.path.join(MODELOS_DIR, f"{userID}_pomodoro.plk"))
+    
+    return {"clusters: ": model.cluster_centers_.tolist()}
+
+@app.get("/api/get_clusters/{userID}")
+async def getClusters(userID: str):
+    model = loadUserModel(userID)
+    return {"clusters: ": model.cluster_centers_.tolist()}
+    
+
 
 @app.middleware("http")
 async def add_cors_headers(request, call_next):
@@ -38,9 +87,6 @@ async def shutdown_event():
 async def read_root():
     return {"message": "Hello World!"}
 
-@app.post("/items")
-async def create_item(item: Time):
-    return {"item": item, "name": item.name, "time": item.time}
 
 connected_clients = []
 @app.websocket("/ws/data")

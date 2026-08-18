@@ -1,0 +1,7 @@
+{
+  "name": "adaptive-pomodoro",
+  "private": true,
+  "scripts": {
+    "dev": "node scripts/dev.js"
+  }
+}

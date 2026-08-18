@@ -2,15 +2,13 @@ import mysql from 'mysql2/promise';
 import dotenv from 'dotenv';
 dotenv.config();
 
-const connection = mysql.createConnection({
-    host:process.env.HOST,
-    database:process.env.DATABASE,
-    user:process.env.USER,
-    password:process.env.PASSWORD 
+const pool = mysql.createPool({
+    host: process.env.HOST,
+    database: process.env.DATABASE,
+    user: process.env.USER,
+    password: process.env.PASSWORD,
+    waitForConnections: true,
+    connectionLimit: 10
 });
 
-const getConnection = async () =>  await connection;
-
-export default {
-    getConnection
-}
+export default pool;

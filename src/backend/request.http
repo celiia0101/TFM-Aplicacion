@@ -1,1 +1,27 @@
-GET http://localhost:4000/usuarios/Celia0101
+### Registro
+POST http://localhost:4000/auth/register
+Content-Type: application/json
+
+{
+  "usuario": "celia0101",
+  "nombreUsuario": "Celia",
+  "password": "supersecreta123"
+}
+
+### Login
+POST http://localhost:4000/auth/login
+Content-Type: application/json
+
+{
+  "usuario": "celia0101",
+  "password": "supersecreta123"
+}
+
+### Login con contraseña incorrecta
+POST http://localhost:4000/auth/login
+Content-Type: application/json
+
+{
+  "usuario": "celia0101",
+  "password": "incorrecta"
+}
