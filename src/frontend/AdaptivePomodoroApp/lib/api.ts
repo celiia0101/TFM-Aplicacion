@@ -9,6 +9,16 @@ export const API_URL = `http://${LOCAL_HOST}:4000`;
 
 export class ApiError extends Error {}
 
+async function handleResponse<T>(res: Response): Promise<T> {
+  const data = await res.json().catch(() => ({}));
+
+  if (!res.ok) {
+    throw new ApiError(data.message ?? 'Algo salió mal');
+  }
+
+  return data as T;
+}
+
 export async function apiPost<T>(path: string, body: unknown): Promise<T> {
   let res: Response;
   try {
@@ -21,11 +31,16 @@ export async function apiPost<T>(path: string, body: unknown): Promise<T> {
     throw new ApiError('No se pudo conectar con el servidor');
   }
 
-  const data = await res.json().catch(() => ({}));
+  return handleResponse<T>(res);
+}
 
-  if (!res.ok) {
-    throw new ApiError(data.message ?? 'Algo salió mal');
+export async function apiGet<T>(path: string): Promise<T> {
+  let res: Response;
+  try {
+    res = await fetch(`${API_URL}${path}`);
+  } catch {
+    throw new ApiError('No se pudo conectar con el servidor');
   }
 
-  return data as T;
+  return handleResponse<T>(res);
 }

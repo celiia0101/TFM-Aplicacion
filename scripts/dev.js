@@ -37,6 +37,11 @@ const services = [
     args: ['run', 'start'],
     cwd: path.join(ROOT, 'src', 'frontend', 'AdaptivePomodoroApp'),
     shell: isWin,
+    // Expo CLI solo dibuja el QR y el menú interactivo (w/a/i, r, etc.) si
+    // detecta una terminal real (stdout.isTTY). Con stdio:'pipe' (para poder
+    // colorear el log) Expo ve una tubería, no una TTY, y se calla. Le damos
+    // acceso directo a la terminal a costa de perder el prefijo de color.
+    interactive: true,
   },
 ];
 
@@ -57,15 +62,19 @@ const children = services.map((svc) => {
     return null;
   }
 
+  const stdio = svc.interactive ? 'inherit' : 'pipe';
+
   // Con shell:true, Node espera una única cadena de comando (no un array de
   // args) para no arrastrar el aviso de deprecación DEP0190 sobre argumentos
   // sin escapar. Como aquí los argumentos son fijos (no vienen de fuera), es seguro.
   const child = svc.shell
-    ? spawn([svc.cmd, ...svc.args].join(' '), { cwd: svc.cwd, shell: true, stdio: 'pipe' })
-    : spawn(svc.cmd, svc.args, { cwd: svc.cwd, shell: false, stdio: 'pipe' });
+    ? spawn([svc.cmd, ...svc.args].join(' '), { cwd: svc.cwd, shell: true, stdio })
+    : spawn(svc.cmd, svc.args, { cwd: svc.cwd, shell: false, stdio });
 
-  child.stdout.on('data', (d) => process.stdout.write(prefixLines(d, prefix)));
-  child.stderr.on('data', (d) => process.stderr.write(prefixLines(d, prefix)));
+  if (!svc.interactive) {
+    child.stdout.on('data', (d) => process.stdout.write(prefixLines(d, prefix)));
+    child.stderr.on('data', (d) => process.stderr.write(prefixLines(d, prefix)));
+  }
   child.on('exit', (code) => console.log(`${prefix} terminó con código ${code}`));
   child.on('error', (err) => console.error(`${prefix} error al arrancar: ${err.message}`));
 

@@ -1,32 +1,6 @@
 import { StyleSheet, View, useWindowDimensions } from 'react-native';
-import Animated, {
-  useSharedValue,
-  useAnimatedStyle,
-  withRepeat,
-  withTiming,
-  withDelay,
-  Easing,
-} from 'react-native-reanimated';
-import { useEffect } from 'react';
 import { DesignColors } from '@/constants/design';
-
-function Aura({ delay, style, color }: { delay: number; style: object; color: string }) {
-  const progress = useSharedValue(0);
-
-  useEffect(() => {
-    progress.value = withDelay(
-      delay,
-      withRepeat(withTiming(1, { duration: 5000, easing: Easing.inOut(Easing.ease) }), -1, true)
-    );
-  }, [delay, progress]);
-
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: 1 + progress.value * 0.1 }],
-    opacity: 0.2 + progress.value * 0.2,
-  }));
-
-  return <Animated.View style={[styles.aura, { backgroundColor: color }, style, animatedStyle]} />;
-}
+import { BreathingGlow } from '@/components/breathing-glow';
 
 export function AtmosphericBackground() {
   const { width, height } = useWindowDimensions();
@@ -34,7 +8,7 @@ export function AtmosphericBackground() {
 
   return (
     <View style={styles.container} pointerEvents="none">
-      <Aura
+      <BreathingGlow
         delay={0}
         color={DesignColors.primary}
         style={{
@@ -43,9 +17,10 @@ export function AtmosphericBackground() {
           borderRadius: size / 2,
           top: -size * 0.35,
           right: -size * 0.35,
+          opacity: 0.15,
         }}
       />
-      <Aura
+      <BreathingGlow
         delay={3000}
         color={DesignColors.secondary}
         style={{
@@ -54,6 +29,7 @@ export function AtmosphericBackground() {
           borderRadius: (size * 0.7) / 2,
           bottom: -size * 0.2,
           left: -size * 0.2,
+          opacity: 0.15,
         }}
       />
     </View>
@@ -65,9 +41,5 @@ const styles = StyleSheet.create({
     ...StyleSheet.absoluteFillObject,
     overflow: 'hidden',
     backgroundColor: DesignColors.surface,
-  },
-  aura: {
-    position: 'absolute',
-    opacity: 0.15,
   },
 });

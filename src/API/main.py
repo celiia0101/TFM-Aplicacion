@@ -22,13 +22,14 @@ app.add_middleware(
 
 app.include_router(auth_router, prefix="/auth", tags=["auth"])
 
-MODELOS_DIR = os.path.join("src", "userModel")
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELOS_DIR = os.path.join(BASE_DIR, "src", "userModel")
 WEIGHT = 18
 
 
 os.makedirs(MODELOS_DIR, exist_ok=True)
 
-baseModel = joblib.load(os.path.join("src", "model", "pomodoro.plk"))
+baseModel = joblib.load(os.path.join(BASE_DIR, "src", "model", "pomodoro.plk"))
 
 def getUserModel(userID: str):
     return joblib.load(os.path.join(MODELOS_DIR, f"{userID}_pomodoro.plk"))

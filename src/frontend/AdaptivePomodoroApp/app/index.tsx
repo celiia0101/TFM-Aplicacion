@@ -21,7 +21,7 @@ import { GlassPanel } from '@/components/glass-panel';
 import { GradientText } from '@/components/gradient-text';
 import { DesignColors, DesignFonts, DesignRadius, DesignSpacing, DesignTypography } from '@/constants/design';
 import { apiPost, ApiError } from '@/lib/api';
-import { saveToken } from '@/lib/auth-storage';
+import { saveToken, saveUser, StoredUser } from '@/lib/auth-storage';
 
 type Mode = 'login' | 'register';
 
@@ -110,9 +110,10 @@ export default function LoginScreen() {
     try {
       const path = mode === 'login' ? '/auth/login' : '/auth/register';
       const body = mode === 'login' ? { usuario, password } : { usuario, nombreUsuario, password };
-      const data = await apiPost<{ token: string }>(path, body);
+      const data = await apiPost<{ token: string; user: StoredUser }>(path, body);
       await saveToken(data.token);
-      router.push('/screen2');
+      await saveUser(data.user);
+      router.replace('/home');
     } catch (err) {
       triggerShake();
       setErrorMessage(err instanceof ApiError ? err.message : 'Algo salió mal');
@@ -136,7 +137,7 @@ export default function LoginScreen() {
             <MaterialIcons name="bubble-chart" size={48} color={DesignColors.secondary} style={styles.heroIcon} />
             <Text style={styles.headline}>
               ¡Hola!{'\n'}
-              <GradientText style={styles.headline}>PomodoroAI</GradientText> te espera.
+              <GradientText style={styles.headline}>PomodoroIA</GradientText> te espera.
             </Text>
           </View>
 
