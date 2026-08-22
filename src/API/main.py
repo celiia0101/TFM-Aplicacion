@@ -60,13 +60,13 @@ async def updateModel (userID: str, pomodoro: int, totalTime: int, estresNvl: in
     print(model._counts)
     
     joblib.dump(model, os.path.join(MODELOS_DIR, f"{userID}_pomodoro.plk"))
-    
-    return {"clusters: ": model.cluster_centers_.tolist()}
+
+    return {"clusters": model.cluster_centers_.tolist()}
 
 @app.get("/api/get_clusters/{userID}")
 async def getClusters(userID: str):
     model = loadUserModel(userID)
-    return {"clusters: ": model.cluster_centers_.tolist()}
+    return {"clusters": model.cluster_centers_.tolist()}
     
 
 

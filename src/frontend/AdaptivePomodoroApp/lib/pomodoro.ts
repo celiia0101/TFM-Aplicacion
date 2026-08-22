@@ -16,17 +16,64 @@ export type Resumen = {
   tiempoInvertidoHoy: number;
   tiempoTrabajoHoy: number;
   concentracion: number;
+  sesionesHoy: number;
   grafica: DiaGrafica[];
   sesionesRecientes: SesionReciente[];
   insight: string;
+};
+
+export type Duracion = {
+  tiempoTrabajo: number;
+  tiempoDescanso: number;
+};
+
+export type EstadoAnimo = {
+  id: number;
+  estadoAnimo: string;
+};
+
+export type MotivoSalida = 'completada' | 'detenida' | 'interrumpida' | 'pausada';
+
+export type PuntoTendencia = {
+  fecha: string;
+  tiempoTrabajo: number;
+};
+
+export type TendenciaEstado = {
+  estadoId: number;
+  estadoAnimo: string;
+  puntos: PuntoTendencia[];
 };
 
 export function getResumen(userId: number): Promise<Resumen> {
   return apiGet<Resumen>(`/pomodoro/resumen/${userId}`);
 }
 
-export function logSesion(userId: number, tiempoTrabajo: number, tiempoDescanso = 0): Promise<void> {
-  return apiPost('/pomodoro', { userId, tiempoTrabajo, tiempoDescanso });
+export function getEstadosAnimo(): Promise<{ estados: EstadoAnimo[] }> {
+  return apiGet<{ estados: EstadoAnimo[] }>('/pomodoro/estados-animo');
+}
+
+export function getTendencia(userId: number): Promise<{ tendencias: TendenciaEstado[] }> {
+  return apiGet<{ tendencias: TendenciaEstado[] }>(`/pomodoro/tendencia/${userId}`);
+}
+
+export function getDuracion(userId: number, estadoId: number): Promise<Duracion> {
+  return apiGet<Duracion>(`/pomodoro/duracion/${userId}/${estadoId}`);
+}
+
+export type CentroideInfo = {
+  antes: number | null;
+  despues: number;
+};
+
+export function logSesion(
+  userId: number,
+  tiempoTrabajo: number,
+  tiempoDescanso: number,
+  estadoId: number,
+  ajusteMinutos = 0
+): Promise<{ error: boolean; centroideInfo: CentroideInfo | null }> {
+  return apiPost('/pomodoro', { userId, tiempoTrabajo, tiempoDescanso, estadoId, ajusteMinutos });
 }
 
 export function formatMinutos(totalMinutos: number): string {
