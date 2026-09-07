@@ -106,7 +106,7 @@ export default function FocusScreen() {
             onSesionRegistrada={() => setSesionesHoy((n) => n + 1)}
             onVerEstadisticas={() => {
               setSesionActiva(null);
-              router.push('/home');
+              router.push('/estadisticas');
             }}
             onSalir={(motivo: MotivoSalida) => {
               setSesionActiva(null);
@@ -380,8 +380,10 @@ const styles = StyleSheet.create({
     marginTop: -12,
   },
   stepper: {
+    width: '100%',
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 24,
   },
   stepperButton: {

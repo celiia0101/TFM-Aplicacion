@@ -1,0 +1,214 @@
+<!DOCTYPE html><html class="dark" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;600&amp;family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.8; filter: blur(40px); }
+            50% { transform: scale(1.15); opacity: 1; filter: blur(20px); }
+        }
+
+        .bio-orb {
+            animation: breathe 8s ease-in-out infinite;
+            background: radial-gradient(circle, rgba(68, 226, 205, 0.4) 0%, rgba(79, 70, 229, 0.3) 50%, transparent 70%);
+        }
+
+        .glass-panel {
+            background: rgba(27, 27, 36, 0.4);
+            backdrop-filter: blur(16px);
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .mesh-gradient {
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(77, 68, 227, 0.15) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(68, 226, 205, 0.1) 0px, transparent 50%);
+        }
+
+        .active-press:active {
+            transform: scale(0.96);
+            transition: transform 0.1s ease-out;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "error": "#ffb4ab",
+                        "surface-container-high": "#2a2933",
+                        "tertiary-container": "#a44100",
+                        "surface-dim": "#13121b",
+                        "secondary": "#44e2cd",
+                        "tertiary-fixed": "#ffdbcc",
+                        "tertiary": "#ffb695",
+                        "on-tertiary": "#571f00",
+                        "surface-container-lowest": "#0e0d16",
+                        "surface": "#13121b",
+                        "outline": "#918fa1",
+                        "on-secondary-fixed": "#00201c",
+                        "error-container": "#93000a",
+                        "on-tertiary-container": "#ffd2be",
+                        "surface-variant": "#35343e",
+                        "outline-variant": "#464555",
+                        "primary-fixed": "#e2dfff",
+                        "surface-container-low": "#1b1b24",
+                        "on-background": "#e4e1ee",
+                        "on-primary-container": "#dad7ff",
+                        "on-error-container": "#ffdad6",
+                        "on-secondary-container": "#004d44",
+                        "inverse-on-surface": "#302f39",
+                        "on-surface": "#e4e1ee",
+                        "surface-tint": "#c3c0ff",
+                        "surface-container-highest": "#35343e",
+                        "secondary-fixed-dim": "#3cddc7",
+                        "background": "#13121b",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-secondary-fixed-variant": "#005047",
+                        "inverse-primary": "#4d44e3",
+                        "on-error": "#690005",
+                        "on-tertiary-fixed": "#351000",
+                        "surface-container": "#1f1f28",
+                        "primary": "#c3c0ff",
+                        "inverse-surface": "#e4e1ee",
+                        "surface-bright": "#393842",
+                        "on-primary-fixed": "#0f0069",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "secondary-fixed": "#62fae3",
+                        "primary-container": "#4f46e5",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "on-primary": "#1d00a5",
+                        "secondary-container": "#03c6b2",
+                        "on-secondary": "#003731",
+                        "on-surface-variant": "#c7c4d8"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-gap": "20px",
+                        "gutter": "16px",
+                        "container-padding": "24px",
+                        "base": "8px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "body-md": ["Inter"],
+                        "display-timer": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "label-caps": ["Inter"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "display-timer": ["80px", { "lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "700" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }]
+                    }
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background text-on-surface font-body-md overflow-hidden mesh-gradient h-screen flex flex-col items-center justify-between">
+<!-- Top AppBar Strategy (Fixed from JSON) -->
+<header class="fixed top-0 w-full z-50 flex justify-center items-center px-gutter py-4 bg-transparent">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-headline-lg-mobile" data-icon="bubble_chart">bubble_chart</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold text-primary">PomodoroAI</h1>
+</div>
+</header>
+<main class="flex-grow w-full max-w-lg mx-auto flex flex-col items-center justify-center px-container-padding relative">
+<!-- Progress Indicator -->
+<div class="mb-12 flex flex-col items-center gap-2 opacity-80">
+<div class="flex gap-1.5">
+<div class="w-8 h-1.5 rounded-full bg-secondary"></div>
+<div class="w-8 h-1.5 rounded-full bg-secondary"></div>
+<div class="w-8 h-1.5 rounded-full bg-secondary/30"></div>
+<div class="w-8 h-1.5 rounded-full bg-secondary/30"></div>
+</div>
+<span class="font-label-caps text-label-caps text-on-surface-variant uppercase tracking-widest">Sesión 2 de 4</span>
+</div>
+<!-- Central Intervention Orb -->
+<div class="relative w-full aspect-square flex items-center justify-center">
+<!-- The Breathing Orb -->
+<div class="absolute inset-0 bio-orb rounded-full"></div>
+<div class="relative z-10 text-center px-8">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg text-white mb-4">¿Necesitas un respiro?</h2>
+<div class="p-6 glass-panel rounded-2xl border border-white/10 shadow-2xl">
+<p class="font-body-md text-on-surface-variant leading-relaxed">
+                        Tu cerebro está en sincronía. Solo <span class="text-secondary font-bold">10 minutos más</span> para alcanzar tu pico de flujo.
+                    </p>
+</div>
+</div>
+</div>
+<!-- Footer Insight -->
+<div class="mt-8 flex items-center gap-3 px-6 py-3 rounded-full bg-surface-container-low/50 border border-white/5">
+<span class="material-symbols-outlined text-secondary" data-icon="bolt" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<p class="font-label-caps text-label-caps text-on-surface-variant italic">
+                Tu energía actual parece estar bajando. Un descanso de 5 min podría recalibrar tu centroides.
+            </p>
+</div>
+</main>
+<!-- Bottom Actions & Navigation -->
+<div class="w-full pb-12 px-container-padding flex flex-col gap-4 max-w-lg mx-auto z-40">
+<!-- Action Buttons -->
+<button class="active-press w-full py-5 rounded-xl bg-gradient-to-r from-primary-container to-secondary-container text-white font-headline-lg-mobile text-headline-lg-mobile flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(79,70,229,0.4)]">
+<span class="material-symbols-outlined" data-icon="play_arrow">play_arrow</span>
+            Seguir Enfocado
+        </button>
+<button class="active-press w-full py-4 rounded-xl glass-panel text-on-surface border border-white/20 font-body-md flex items-center justify-center gap-3 hover:bg-white/5 transition-colors">
+<span class="material-symbols-outlined" data-icon="spa">spa</span>
+            Descanso Inteligente
+        </button>
+</div>
+<!-- Persistent Bottom Nav Shell (Filtered for Focus Screen - Minimizing distraction) -->
+<!-- Note: We are keeping the Shell as per logic but it is visually integrated for the intervention task -->
+<nav class="fixed bottom-0 w-full z-50 flex justify-around items-center px-container-padding pb-8 pt-4 bg-surface/10 backdrop-blur-xl border-t border-white/10">
+<div class="flex flex-col items-center justify-center bg-secondary-container/30 text-secondary rounded-full p-3 transition-transform duration-300 scale-95">
+<span class="material-symbols-outlined" data-icon="adjust" style="font-variation-settings: 'FILL' 1;">adjust</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant/60 p-3 hover:text-secondary hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined" data-icon="query_stats">query_stats</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant/60 p-3 hover:text-secondary hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined" data-icon="spa">spa</span>
+</div>
+<div class="flex flex-col items-center justify-center text-on-surface-variant/60 p-3 hover:text-secondary hover:bg-white/5 transition-all">
+<span class="material-symbols-outlined" data-icon="settings">settings</span>
+</div>
+</nav>
+<script>
+        // Micro-interaction for the orb
+        document.addEventListener('mousemove', (e) => {
+            const orb = document.querySelector('.bio-orb');
+            if (!orb) return;
+            const x = (e.clientX / window.innerWidth - 0.5) * 20;
+            const y = (e.clientY / window.innerHeight - 0.5) * 20;
+            orb.style.transform = `translate(${x}px, ${y}px)`;
+        });
+
+        // Simple haptic-like feedback on buttons
+        const buttons = document.querySelectorAll('.active-press');
+        buttons.forEach(btn => {
+            btn.addEventListener('touchstart', () => {
+                if ('vibrate' in navigator) {
+                    navigator.vibrate(10);
+                }
+            });
+        });
+    </script>
+
+
+</body></html>

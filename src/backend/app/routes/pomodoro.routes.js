@@ -14,18 +14,50 @@ const DESCANSO_FIJO_MIN = 10;
 // la pantalla de Focus. Los índices son los mismos ID_ESTADO de L_ESTADO_ANIMO.
 const DURACION_DEFECTO_POR_ESTADO = { 1: 25, 2: 35, 3: 15, 4: 20 };
 
+// El modelo de IA agrupa sus 4 clústeres por comportamiento real (distancia),
+// no por el ID_ESTADO que eligió el usuario, así que el índice de clúster de
+// cada ánimo puede migrar con el tiempo según cómo evolucionen los datos: no
+// se puede fijar una vez y olvidarse. Lo que sí es estable es el ORDEN
+// esperado por duración de trabajo, de menor a mayor: Estresado, Cansado,
+// Bien, Puedo con Todo. Cada request recalculamos qué clúster real ocupa
+// cada posición de ese ranking.
+const POSICION_POR_ESTADO = {
+  2: 0, // Estresado -> menor duración
+  4: 1, // Cansado
+  1: 2, // Bien
+  3: 3, // Puedo con Todo -> mayor duración
+};
+
+// Ordena los índices de los 4 centroides crudos de menor a mayor duración de
+// trabajo (centroide[0]).
+function ordenarClustersPorDuracion(clusters) {
+  return clusters
+    .map((centroide, indice) => ({ indice, duracion: centroide[0] }))
+    .sort((a, b) => a.duracion - b.duracion)
+    .map((c) => c.indice);
+}
+
+// Traduce un ID_ESTADO al índice de clúster real que le corresponde AHORA
+// MISMO, según cómo estén ordenados por duración los centroides del usuario.
+function indiceClusterParaEstado(clusters, estadoId) {
+  const posicion = POSICION_POR_ESTADO[Number(estadoId)];
+  if (posicion === undefined) return undefined;
+  return ordenarClustersPorDuracion(clusters)[posicion];
+}
+
 router.get('/duracion/:userId/:estadoId', async (req, res) => {
   const { userId, estadoId } = req.params;
-  // El modelo de scikit-learn indexa sus 4 clústeres en 0-3; nuestros
-  // ID_ESTADO van 1-4, así que restamos 1 al llamar al servicio de IA.
-  const indiceCentroide = Number(estadoId) - 1;
 
   let tiempoTrabajo;
   try {
     const clusters = await obtenerCentroides(userId);
+    const indiceCentroide = indiceClusterParaEstado(clusters, estadoId);
     const centroide = clusters[indiceCentroide];
-    if (!centroide) throw new Error(`No existe centroide para el índice ${indiceCentroide}`);
-    tiempoTrabajo = Math.max(1, Math.round(centroide[0]));
+    if (!centroide) throw new Error(`No existe centroide para el estado ${estadoId}`);
+    // El modelo de IA guarda sus centroides en SEGUNDOS (para no perder
+    // precisión frente a minutos enteros); aquí convertimos a minutos, que es
+    // lo que espera el frontend.
+    tiempoTrabajo = Math.max(1, Math.round(centroide[0] / 60));
   } catch (err) {
     console.error('No se pudo consultar el servicio de IA, uso valor por defecto:', err.message);
     tiempoTrabajo = DURACION_DEFECTO_POR_ESTADO[estadoId] ?? 25;
@@ -77,6 +109,37 @@ router.get('/tendencia/:userId', async (req, res) => {
   }
 });
 
+function comoFechaClave(fecha) {
+  const y = fecha.getFullYear();
+  const m = String(fecha.getMonth() + 1).padStart(2, '0');
+  const d = String(fecha.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+// Días consecutivos (terminando hoy o ayer) con al menos una sesión. Si el
+// usuario aún no ha hecho nada hoy pero sí ayer, la racha se sigue contando
+// como viva (se rompe solo cuando pasa un día entero sin ninguna sesión).
+function calcularRacha(diasConSesion) {
+  if (diasConSesion.length === 0) return 0;
+  const dias = new Set(diasConSesion);
+
+  const hoy = new Date();
+  const ayer = new Date(hoy);
+  ayer.setDate(ayer.getDate() - 1);
+
+  let cursor;
+  if (dias.has(comoFechaClave(hoy))) cursor = hoy;
+  else if (dias.has(comoFechaClave(ayer))) cursor = ayer;
+  else return 0;
+
+  let racha = 0;
+  while (dias.has(comoFechaClave(cursor))) {
+    racha++;
+    cursor.setDate(cursor.getDate() - 1);
+  }
+  return racha;
+}
+
 function franjaDeHora(hora) {
   if (hora >= 5 && hora <= 11) return 'mañana';
   if (hora >= 12 && hora <= 18) return 'tarde';
@@ -123,11 +186,26 @@ function calcularInsight(sesiones) {
 }
 
 router.post('/', async (req, res) => {
-  const { userId, tiempoTrabajo, tiempoDescanso = 0, estadoId, ajusteMinutos = 0 } = req.body;
+  const {
+    userId,
+    tiempoTrabajo,
+    tiempoDescanso = 0,
+    estadoId,
+    ajusteMinutos = 0,
+    tiempoTrabajoSeg,
+    tiempoDescansoSeg,
+  } = req.body;
 
   if (!userId || !tiempoTrabajo) {
     return res.status(400).json({ error: true, message: 'userId y tiempoTrabajo son obligatorios' });
   }
+
+  // tiempoTrabajo/tiempoDescanso llegan ya truncados a minutos enteros (así
+  // es la columna en M_TIEMPOS), pero para el modelo de IA queremos la
+  // precisión real en segundos. Si el cliente no los manda (versiones viejas
+  // del frontend), caemos de vuelta a los minutos truncados.
+  const trabajoSegExacto = typeof tiempoTrabajoSeg === 'number' ? tiempoTrabajoSeg : tiempoTrabajo * 60;
+  const descansoSegExacto = typeof tiempoDescansoSeg === 'number' ? tiempoDescansoSeg : tiempoDescanso * 60;
 
   try {
     await pool.query(
@@ -146,32 +224,43 @@ router.post('/', async (req, res) => {
     let centroideInfo = null;
     if (estadoId) {
       try {
-        const indiceCentroide = Number(estadoId) - 1;
+        // Necesitamos los centroides actuales SÍ o SÍ para saber a qué
+        // índice de clúster real corresponde este estado de ánimo ahora
+        // mismo (puede haber migrado respecto a la última sesión). Si esto
+        // falla, no hay forma segura de saber a qué clúster mandar la
+        // actualización, así que abortamos el bloque entero (la sesión ya
+        // se guardó arriba, solo se pierde la actualización del modelo).
+        const clustersPrevios = await obtenerCentroides(userId);
+        const indiceCentroide = indiceClusterParaEstado(clustersPrevios, estadoId);
+        const centroidePrevioRaw = clustersPrevios[indiceCentroide];
+        // Los centroides del modelo ya están en SEGUNDOS: se lo pasamos tal
+        // cual al frontend (que sabe formatear "min y seg") en vez de
+        // redondear aquí a minutos enteros, que escondería el cambio real
+        // cuando el centroide se mueve solo unos segundos.
+        const centroidePrevio = centroidePrevioRaw ? Math.round(centroidePrevioRaw[0]) : null;
 
-        let centroidePrevio = null;
-        try {
-          const clustersPrevios = await obtenerCentroides(userId);
-          const centroidePrevioRaw = clustersPrevios[indiceCentroide];
-          if (centroidePrevioRaw) centroidePrevio = Math.round(centroidePrevioRaw[0]);
-        } catch {
-          // Si esto falla seguimos igualmente: solo perdemos el "antes" a mostrar.
-        }
-
-        const pomodoroAjustado = Math.max(1, Math.round(tiempoTrabajo + ajusteMinutos));
+        // Igual que el tiempo real, el ajuste de la encuesta viene en minutos
+        // y hay que pasarlo a segundos antes de sumarlo. Un pomodoro de al
+        // menos 1 minuto (60s) para no mandar centroides absurdos si el
+        // ajuste negativo dejara el valor en 0 o menos.
+        const pomodoroAjustadoSeg = Math.max(60, Math.round(trabajoSegExacto + ajusteMinutos * 60));
         const resultado = await notificarFinSesion(userId, {
-          pomodoro: pomodoroAjustado,
-          totalTime: tiempoTrabajo + tiempoDescanso,
+          pomodoro: pomodoroAjustadoSeg,
+          totalTime: Math.round(trabajoSegExacto + descansoSegExacto),
           estresNvl: indiceCentroide,
         });
         const nuevoCentroide = resultado.clusters?.[indiceCentroide];
         if (nuevoCentroide) {
-          const centroideNuevoExacto = Number(nuevoCentroide[0].toFixed(2));
+          // M_POMODORO.POMODORO (para la tendencia del Perfil) se muestra en
+          // minutos, así que convertimos de vuelta desde los segundos del modelo.
+          const centroideNuevoExactoMin = Number((nuevoCentroide[0] / 60).toFixed(2));
           await pool.query('INSERT INTO M_POMODORO (ID_USER, ID_ESTADO, FECHA, POMODORO) VALUES (?, ?, NOW(), ?)', [
             userId,
             estadoId,
-            centroideNuevoExacto,
+            centroideNuevoExactoMin,
           ]);
-          centroideInfo = { antes: centroidePrevio, despues: Math.round(centroideNuevoExacto) };
+          // También en segundos, por la misma razón que centroidePrevio.
+          centroideInfo = { antes: centroidePrevio, despues: Math.round(nuevoCentroide[0]) };
         }
       } catch (err) {
         console.error('No se pudo actualizar el modelo de IA:', err.message);
@@ -229,7 +318,7 @@ router.get('/resumen/:userId', async (req, res) => {
       `SELECT FECHA AS fecha, TIEMPO_TRABAJO AS tiempoTrabajo, TIEMPO_DESCANSO AS tiempoDescanso
        FROM M_TIEMPOS
        WHERE ID_USER = ?
-       ORDER BY FECHA DESC
+       ORDER BY FECHA DESC, ID_TIEMPO DESC
        LIMIT 5`,
       [userId]
     );
@@ -241,10 +330,20 @@ router.get('/resumen/:userId', async (req, res) => {
       [userId]
     );
 
+    // Un año de margen es de sobra para cualquier racha real; evita escanear
+    // toda la tabla en cuentas muy antiguas.
+    const [diasConSesion] = await pool.query(
+      `SELECT DISTINCT DATE_FORMAT(FECHA, '%Y-%m-%d') AS fecha
+       FROM M_TIEMPOS
+       WHERE ID_USER = ? AND FECHA >= (CURDATE() - INTERVAL 1 YEAR)`,
+      [userId]
+    );
+
     const tiempoTrabajo = Number(hoy.tiempoTrabajo);
     const tiempoInvertido = Number(hoy.tiempoInvertido);
     const concentracion = tiempoInvertido > 0 ? Math.round((tiempoTrabajo / tiempoInvertido) * 100) : 0;
     const insight = calcularInsight(historicoParaInsight);
+    const rachaDias = calcularRacha(diasConSesion.map((fila) => fila.fecha));
 
     return res.status(200).json({
       error: false,
@@ -255,10 +354,51 @@ router.get('/resumen/:userId', async (req, res) => {
       grafica,
       sesionesRecientes,
       insight,
+      rachaDias,
     });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ error: true, message: 'Error al obtener el resumen' });
+  }
+});
+
+// Estadísticas semanales para la pantalla de Bio-Analytics: concentración y
+// tiempo real de enfoque de los últimos 7 días, comparados contra los 7 días
+// anteriores para mostrar la tendencia (p.ej. "+2.1h vs. semana pasada").
+router.get('/estadisticas/:userId', async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    const [[semanaActual]] = await pool.query(
+      `SELECT COALESCE(SUM(TIEMPO_TRABAJO), 0) AS trabajo,
+              COALESCE(SUM(TIEMPO_TRABAJO + TIEMPO_DESCANSO), 0) AS total
+       FROM M_TIEMPOS
+       WHERE ID_USER = ? AND FECHA >= (CURDATE() - INTERVAL 6 DAY)`,
+      [userId]
+    );
+
+    const [[semanaAnterior]] = await pool.query(
+      `SELECT COALESCE(SUM(TIEMPO_TRABAJO), 0) AS trabajo
+       FROM M_TIEMPOS
+       WHERE ID_USER = ?
+         AND FECHA >= (CURDATE() - INTERVAL 13 DAY)
+         AND FECHA < (CURDATE() - INTERVAL 6 DAY)`,
+      [userId]
+    );
+
+    const trabajoSemana = Number(semanaActual.trabajo);
+    const totalSemana = Number(semanaActual.total);
+    const concentracionSemana = totalSemana > 0 ? Math.round((trabajoSemana / totalSemana) * 100) : 0;
+
+    return res.status(200).json({
+      error: false,
+      concentracionSemana,
+      tiempoEnfoqueSemanaMin: trabajoSemana,
+      tiempoEnfoqueSemanaAnteriorMin: Number(semanaAnterior.trabajo),
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ error: true, message: 'Error al obtener las estadísticas' });
   }
 });
 

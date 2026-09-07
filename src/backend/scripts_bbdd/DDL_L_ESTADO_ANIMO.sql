@@ -2,10 +2,10 @@ INSERT INTO adaptivepomodoro.L_ESTADO_ANIMO
 VALUES (1, "Bien");
 
 INSERT INTO adaptivepomodoro.L_ESTADO_ANIMO
-VALUES(2, "Puedo con Todo");
+VALUES (3, "Puedo con Todo");
 
 INSERT INTO adaptivepomodoro.L_ESTADO_ANIMO
-VALUES(3, "Cansado");
+VALUES(4, "Cansado");
 
 INSERT INTO adaptivepomodoro.L_ESTADO_ANIMO
-VALUES(4, "Estresado");
+VALUES(2, "Estresado");

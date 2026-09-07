@@ -5,7 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 
 import { GlassPanel } from '@/components/glass-panel';
 import { DesignColors, DesignFonts, DesignSpacing, DesignTypography } from '@/constants/design';
-import { CentroideInfo, MotivoSalida } from '@/lib/pomodoro';
+import { CentroideInfo, formatDuracionSegundos, MotivoSalida } from '@/lib/pomodoro';
 
 type Ritmo = 'corto' | 'ideal' | 'largo';
 
@@ -13,6 +13,16 @@ const AJUSTE_BASE: Record<Ritmo, number> = { corto: -5, ideal: 0, largo: 5 };
 const AJUSTE_MIN = -15;
 const AJUSTE_MAX = 15;
 const AJUSTE_PASO = 5;
+
+// "Más corto/Ideal/Más largo" no es un estado propio: se deriva siempre del
+// signo del ajuste, para que mover el stepper directamente (sin tocar los
+// botones) también actualice cuál aparece marcado.
+function ritmoDeAjuste(ajuste: number): Ritmo {
+  if (ajuste < 0) return 'corto';
+  if (ajuste > 0) return 'largo';
+  return 'ideal';
+}
+
 
 // La sesión pudo terminar de formas muy distintas (completa, parada,
 // interrumpida...); el título y el icono deben reflejarlo con honestidad,
@@ -43,36 +53,34 @@ const COPY_POR_MOTIVO: Record<MotivoSalida, { icono: keyof typeof MaterialIcons.
 export function SessionSummary({
   motivo,
   estadoAnimo,
-  tiempoTrabajoMin,
-  tiempoDescansoMin,
+  tiempoTrabajoSeg,
+  tiempoDescansoSeg,
   onFinalizar,
   onVerEstadisticas,
   onContinuar,
 }: {
   motivo: MotivoSalida;
   estadoAnimo: string;
-  tiempoTrabajoMin: number;
-  tiempoDescansoMin: number;
+  tiempoTrabajoSeg: number;
+  tiempoDescansoSeg: number;
   onFinalizar: (ajusteMinutos: number) => Promise<CentroideInfo | null>;
   onVerEstadisticas: (ajusteMinutos: number) => void;
   onContinuar: () => void;
 }) {
   const copy = COPY_POR_MOTIVO[motivo];
-  const [ritmo, setRitmo] = useState<Ritmo>('ideal');
   const [ajuste, setAjuste] = useState(0);
+  const ritmo = ritmoDeAjuste(ajuste);
   const [enviando, setEnviando] = useState(false);
   // undefined = todavía no se ha enviado la encuesta; null = se envió pero
   // sin info de centroide (p.ej. el servicio de IA no respondió).
   const [resultado, setResultado] = useState<CentroideInfo | null | undefined>(undefined);
 
-  const seleccionarRitmo = (r: Ritmo) => {
-    setRitmo(r);
-    setAjuste(AJUSTE_BASE[r]);
-  };
-
-  const concentracionRonda =
-    tiempoTrabajoMin + tiempoDescansoMin > 0
-      ? Math.round((tiempoTrabajoMin / (tiempoTrabajoMin + tiempoDescansoMin)) * 100)
+  // La concentración compara contra el tiempo TOTAL de la sesión (todas las
+  // rondas), no solo la última — igual que el resto de la app (Home usa el
+  // mismo criterio trabajo / (trabajo + descanso)).
+  const concentracionSesion =
+    tiempoTrabajoSeg + tiempoDescansoSeg > 0
+      ? Math.round((tiempoTrabajoSeg / (tiempoTrabajoSeg + tiempoDescansoSeg)) * 100)
       : 0;
 
   const handleFinalizar = async () => {
@@ -96,11 +104,11 @@ export function SessionSummary({
             <View style={styles.centroideRow}>
               {resultado.antes !== null && (
                 <>
-                  <Text style={styles.centroideAntes}>{resultado.antes} min</Text>
+                  <Text style={styles.centroideAntes}>{formatDuracionSegundos(resultado.antes)}</Text>
                   <MaterialIcons name="arrow-forward" size={18} color={DesignColors.onSurfaceVariant} />
                 </>
               )}
-              <Text style={styles.centroideDespues}>{resultado.despues} min</Text>
+              <Text style={styles.centroideDespues}>{formatDuracionSegundos(resultado.despues)}</Text>
             </View>
             <Text style={styles.cardCaption}>Para el ánimo &quot;{estadoAnimo}&quot;, según tu encuesta.</Text>
           </GlassPanel>
@@ -138,7 +146,7 @@ export function SessionSummary({
             <MaterialIcons name="timer" size={18} color={DesignColors.onSurfaceVariant} />
             <Text style={styles.filaResumenLabel}>Trabajo</Text>
           </View>
-          <Text style={styles.filaResumenValor}>{tiempoTrabajoMin} min</Text>
+          <Text style={styles.filaResumenValor}>{formatDuracionSegundos(tiempoTrabajoSeg)}</Text>
         </View>
 
         <View style={styles.filaResumen}>
@@ -146,7 +154,7 @@ export function SessionSummary({
             <MaterialIcons name="bolt" size={18} color={DesignColors.secondary} />
             <Text style={styles.filaResumenLabel}>Concentración</Text>
           </View>
-          <Text style={[styles.filaResumenValor, { color: DesignColors.secondary }]}>{concentracionRonda}%</Text>
+          <Text style={[styles.filaResumenValor, { color: DesignColors.secondary }]}>{concentracionSesion}%</Text>
         </View>
       </GlassPanel>
 
@@ -159,7 +167,7 @@ export function SessionSummary({
             <Pressable
               key={r}
               style={[styles.segmentoBtn, ritmo === r && styles.segmentoBtnActivo]}
-              onPress={() => seleccionarRitmo(r)}
+              onPress={() => setAjuste(AJUSTE_BASE[r])}
             >
               <Text style={[styles.segmentoTexto, ritmo === r && styles.segmentoTextoActivo]}>
                 {r === 'corto' ? 'Más corto' : r === 'ideal' ? 'Ideal' : 'Más largo'}

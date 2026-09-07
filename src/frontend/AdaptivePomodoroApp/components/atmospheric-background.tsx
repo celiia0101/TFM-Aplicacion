@@ -4,7 +4,12 @@ import { BreathingGlow } from '@/components/breathing-glow';
 
 export function AtmosphericBackground() {
   const { width, height } = useWindowDimensions();
-  const size = Math.max(width, height) * 0.9;
+  // Pensado para pantallas de móvil en vertical, donde ancho y alto son
+  // parecidos. En una ventana de escritorio ancha y baja (mismo build web,
+  // ventana grande) "ancho" puede ser mucho mayor que "alto", y el halo
+  // salía gigante y tapaba el contenido. El tope evita eso sin cambiar cómo
+  // se ve en móvil (ahí nunca se llega a este límite).
+  const size = Math.min(Math.max(width, height) * 0.9, 900);
 
   return (
     <View style={styles.container} pointerEvents="none">

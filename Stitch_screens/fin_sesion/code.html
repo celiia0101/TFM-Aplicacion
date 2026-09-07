@@ -1,0 +1,244 @@
+<!DOCTYPE html><html class="dark" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>PulseAI - Sesión Completada</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700&amp;family=Inter:wght@400;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "surface-container-highest": "#35343e",
+                        "on-tertiary-fixed": "#351000",
+                        "surface-container-high": "#2a2933",
+                        "on-tertiary-fixed-variant": "#7b2f00",
+                        "inverse-on-surface": "#302f39",
+                        "surface-container": "#1f1f28",
+                        "on-secondary-container": "#004d44",
+                        "on-secondary": "#003731",
+                        "secondary-container": "#03c6b2",
+                        "outline-variant": "#464555",
+                        "tertiary-container": "#a44100",
+                        "outline": "#918fa1",
+                        "surface-dim": "#13121b",
+                        "on-primary-fixed-variant": "#3323cc",
+                        "surface-container-lowest": "#0e0d16",
+                        "error-container": "#93000a",
+                        "on-primary-container": "#dad7ff",
+                        "surface": "#13121b",
+                        "surface-container-low": "#1b1b24",
+                        "on-secondary-fixed-variant": "#005047",
+                        "secondary-fixed": "#62fae3",
+                        "on-background": "#e4e1ee",
+                        "inverse-primary": "#4d44e3",
+                        "on-primary": "#1d00a5",
+                        "tertiary-fixed": "#ffdbcc",
+                        "on-secondary-fixed": "#00201c",
+                        "secondary": "#44e2cd",
+                        "primary-fixed": "#e2dfff",
+                        "surface-variant": "#35343e",
+                        "secondary-fixed-dim": "#3cddc7",
+                        "primary-container": "#4f46e5",
+                        "primary-fixed-dim": "#c3c0ff",
+                        "on-tertiary-container": "#ffd2be",
+                        "inverse-surface": "#e4e1ee",
+                        "on-tertiary": "#571f00",
+                        "surface-tint": "#c3c0ff",
+                        "on-surface-variant": "#c7c4d8",
+                        "error": "#ffb4ab",
+                        "background": "#13121b",
+                        "primary": "#c3c0ff",
+                        "on-error": "#690005",
+                        "on-surface": "#e4e1ee",
+                        "tertiary-fixed-dim": "#ffb695",
+                        "on-primary-fixed": "#0f0069",
+                        "tertiary": "#ffb695",
+                        "surface-bright": "#393842",
+                        "on-error-container": "#ffdad6"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "card-gap": "20px",
+                        "base": "8px",
+                        "container-padding": "24px",
+                        "gutter": "16px"
+                    },
+                    "fontFamily": {
+                        "headline-lg-mobile": ["Plus Jakarta Sans"],
+                        "headline-lg": ["Plus Jakarta Sans"],
+                        "body-md": ["Inter"],
+                        "label-caps": ["Inter"],
+                        "display-timer": ["Plus Jakarta Sans"]
+                    },
+                    "fontSize": {
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600" }],
+                        "display-timer": ["80px", { "lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "700" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(31, 31, 40, 0.4);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .bio-card-highlight {
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .breathing-bg {
+            animation: breathe 8s infinite alternate ease-in-out;
+        }
+        @keyframes breathe {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.05); opacity: 0.8; }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background font-body-md min-h-screen relative overflow-x-hidden selection:bg-primary-container selection:text-on-primary-container">
+<!-- Atmospheric Background Aura -->
+<div class="fixed inset-0 pointer-events-none z-[-1] overflow-hidden">
+<div class="absolute top-[-10%] left-[-10%] w-[50vw] h-[50vw] rounded-full bg-primary/10 blur-[100px] breathing-bg mix-blend-screen" style="transform: translate(7.94872px, 16.7599px);"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[60vw] h-[60vw] rounded-full bg-secondary/10 blur-[120px] breathing-bg mix-blend-screen" style="animation-delay: -4s; transform: translate(-7.94872px, -16.7599px);"></div>
+</div>
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-white/10 flat no shadows flex justify-between items-center px-container-padding h-16 transition-transform hover:opacity-80">
+<div class="flex items-center gap-4">
+<span class="material-symbols-outlined text-primary text-2xl" style="font-variation-settings: 'FILL' 1;">bubble_chart</span>
+<span class="font-headline-lg-mobile text-headline-lg-mobile font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">PomodoroAI</span>
+</div>
+<img alt="User Avatar" class="w-8 h-8 rounded-full border border-white/20 object-cover" data-alt="A small, stylized profile avatar of a user in a futuristic, bio-tech themed app interface. The avatar should have a clean, minimalist design with a subtle glow, fitting a high-tech dark mode aesthetic. Deep indigo background, glowing cyan accents." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDvad5RZTTbzGen809iEEAudhV0MCM0HpccNQSpYGEl2bQP3nXI0g2TB0r7v0M1aWodPhuyA3ZmwlJtdBo2JFK4na-xFjXy7zPKwf9AIoYS8HtIspnlfPgNfF9qzvrZbiQNBrB6_tH59Hmz6ENEpf__KhyrFvARg0ZPGl7oilSSIBfGakawJJrUqtbwuMyXUGGG1rGYkgNNTOt3av5YwoYy2BCtJVxB8Dtu4Tqnkl47_8RGnW0bYGQi">
+</header>
+<!-- Main Content Canvas -->
+<main class="pt-24 pb-32 px-container-padding max-w-3xl mx-auto flex flex-col gap-8">
+<!-- Hero Section -->
+<section class="flex flex-col items-center justify-center text-center py-8">
+<div class="w-24 h-24 rounded-full bg-gradient-to-br from-secondary/20 to-primary/20 flex items-center justify-center mb-6 shadow-[0_0_40px_rgba(68,226,205,0.2)] border border-secondary/30 relative">
+<div class="absolute inset-0 rounded-full border border-secondary/50 animate-ping opacity-20"></div>
+<span class="material-symbols-outlined text-5xl text-secondary" style="font-variation-settings: 'FILL' 1;">emoji_events</span>
+</div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface mb-2">¡Excelente trabajo!</h1>
+<p class="text-on-surface-variant max-w-md">Has completado un bloque de trabajo profundo. Tu ritmo cognitivo se ha estabilizado.</p>
+</section>
+<!-- Bento Grid Layout for Summary & Bio-Logic -->
+<div class="grid grid-cols-1 gap-card-gap">
+<!-- Resumen de Sesión -->
+<section class="glass-panel bio-card-highlight rounded-xl p-6 flex flex-col gap-6">
+<h2 class="font-label-caps text-label-caps text-primary tracking-widest uppercase mb-2 flex items-center gap-2">
+<span class="material-symbols-outlined text-[16px]">analytics</span>
+                    Resumen de Sesión
+                </h2>
+<div class="space-y-5">
+<div class="flex items-center justify-between border-b border-white/5 pb-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">timer</span>
+<span class="text-on-surface-variant">Duración</span>
+</div>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-on-surface">45 min</span>
+</div>
+<div class="flex items-center justify-between border-b border-white/5 pb-3">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-secondary">bolt</span>
+<span class="text-on-surface-variant">Focus Score</span>
+</div>
+<span class="font-headline-lg-mobile text-headline-lg-mobile text-secondary drop-shadow-[0_0_8px_rgba(68,226,205,0.4)]">94%</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-3">
+<span class="material-symbols-outlined text-on-surface-variant">task_alt</span>
+<span class="text-on-surface-variant">Tarea Completada</span>
+</div>
+<div class="bg-surface-container-high rounded-lg p-3 text-on-surface border border-white/5">
+                            Desarrollo de Algoritmos
+                        </div>
+</div>
+</div>
+</section><section class="glass-panel bio-card-highlight rounded-xl p-6 flex flex-col gap-4 mt-4">
+<div class="flex flex-col gap-1">
+<h3 class="font-label-caps text-label-caps text-primary tracking-widest uppercase">¿Cómo fue tu ritmo?</h3>
+<p class="text-sm text-on-surface-variant">¿Podrías haber aguantado más o prefieres sesiones más cortas?</p>
+</div>
+<!-- Segmented Control -->
+<div class="grid grid-cols-3 bg-surface-container-high rounded-lg p-1 border border-white/5">
+<button class="py-2 text-sm font-label-caps rounded-lg hover:bg-surface-container-highest transition-colors text-on-surface-variant">Más corto</button>
+<button class="py-2 text-sm font-label-caps rounded-lg bg-primary/20 text-primary border border-primary/30">Ideal</button>
+<button class="py-2 text-sm font-label-caps rounded-lg hover:bg-surface-container-highest transition-colors text-on-surface-variant">Más largo</button>
+</div>
+<!-- Adjustment Slider -->
+<div class="flex flex-col gap-3 mt-2">
+<div class="flex justify-between items-center">
+<span class="text-sm text-on-surface-variant">Ajustar por minutos</span>
+<span class="text-secondary font-bold">+0 min</span>
+</div>
+<div class="relative h-6 flex items-center">
+<div class="absolute w-full h-1 bg-surface-container-highest rounded-full"></div>
+<div class="absolute w-1/2 h-1 bg-secondary rounded-full" style="width: 50%;"></div>
+<div class="absolute left-1/2 -translate-x-1/2 w-4 h-4 bg-secondary rounded-full shadow-[0_0_10px_rgba(68,226,205,0.5)] cursor-pointer"></div>
+</div>
+</div>
+</section>
+<!-- Bio-Logic Insight -->
+</div>
+<!-- Action Buttons -->
+<section class="flex flex-col gap-4 mt-8">
+<button class="w-full bg-primary-container text-on-primary-container font-headline-lg-mobile text-[16px] py-4 rounded-xl shadow-lg hover:opacity-90 transition-opacity flex items-center justify-center gap-2" onclick="this.innerHTML='&lt;span class=&quot;animate-spin material-symbols-outlined&quot;&gt;progress_activity&lt;/span&gt; Enviando...'; this.classList.add('opacity-70'); setTimeout(() =&gt; { this.innerHTML='Finalizado &lt;span class=&quot;material-symbols-outlined&quot;&gt;check_circle&lt;/span&gt;'; this.classList.remove('bg-primary-container'); this.classList.add('bg-secondary', 'text-on-secondary'); }, 1500);">
+<span class="">Finalizar</span>
+<span class="material-symbols-outlined text-[20px]">check_circle</span>
+</button>
+<button class="w-full bg-surface-container text-on-surface font-headline-lg-mobile text-[16px] py-4 rounded-xl border border-outline-variant hover:bg-surface-container-high transition-colors flex items-center justify-center gap-2">
+<span class="">Ver Estadísticas</span>
+<span class="material-symbols-outlined text-[20px]">monitoring</span>
+</button>
+</section>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-background/80 backdrop-blur-xl border-t border-white/10 shadow-lg rounded-t-xl md:hidden">
+<!-- Focus (Active) -->
+<a class="flex flex-col items-center justify-center text-secondary bg-secondary/10 rounded-xl px-4 py-1 hover:text-secondary transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-200" style="font-variation-settings: 'FILL' 1;">timer</span>
+<span class="font-label-caps text-label-caps mt-1">Focus</span>
+</a>
+<!-- History (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:text-secondary transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-200">history</span>
+<span class="font-label-caps text-label-caps mt-1">History</span>
+</a>
+<!-- Profile (Inactive) -->
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:text-secondary transition-colors group" href="#">
+<span class="material-symbols-outlined group-active:scale-90 transition-transform duration-200">person</span>
+<span class="font-label-caps text-label-caps mt-1">Profile</span>
+</a>
+</nav>
+<!-- Interactive script for minor atmospheric effects -->
+<script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const auraLayers = document.querySelectorAll('.mix-blend-screen');
+            
+            document.addEventListener('mousemove', (e) => {
+                const x = e.clientX / window.innerWidth;
+                const y = e.clientY / window.innerHeight;
+                
+                auraLayers.forEach((layer, index) => {
+                    const factor = index === 0 ? 20 : -20;
+                    layer.style.transform = `translate(${x * factor}px, ${y * factor}px)`;
+                });
+            });
+        });
+    </script>
+
+
+</body></html>

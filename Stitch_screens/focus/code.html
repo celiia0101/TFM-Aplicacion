@@ -1,0 +1,241 @@
+<!DOCTYPE html><html class="dark" lang="es"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #13121b;
+            overflow-x: hidden;
+        }
+        .glass-panel {
+            background: rgba(255, 255, 255, 0.03);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .bio-orb {
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            filter: blur(40px);
+            opacity: 0.6;
+        }
+        .mood-card:hover .bio-orb {
+            transform: scale(1.2);
+            opacity: 0.9;
+            filter: blur(30px);
+        }
+        .active-mood {
+            border-color: #44e2cd;
+            background: rgba(68, 226, 205, 0.05);
+        }
+        .active-mood .bio-orb {
+            opacity: 1;
+            filter: blur(20px);
+            transform: scale(1.3);
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.4; }
+            50% { transform: scale(1.15); opacity: 0.6; }
+        }
+        .animate-breathe {
+            animation: breathe 8s ease-in-out infinite;
+        }
+    </style>
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "background": "#13121b",
+                      "inverse-surface": "#e4e1ee",
+                      "secondary": "#44e2cd",
+                      "on-primary-fixed": "#0f0069",
+                      "primary": "#c3c0ff",
+                      "inverse-on-surface": "#302f39",
+                      "surface-container-lowest": "#0e0d16",
+                      "on-error": "#690005",
+                      "on-tertiary-fixed": "#351000",
+                      "surface-dim": "#13121b",
+                      "on-secondary-container": "#004d44",
+                      "surface-variant": "#35343e",
+                      "tertiary-container": "#a44100",
+                      "surface-bright": "#393842",
+                      "on-secondary-fixed": "#00201c",
+                      "primary-container": "#4f46e5",
+                      "inverse-primary": "#4d44e3",
+                      "surface": "#13121b",
+                      "surface-container-highest": "#35343e",
+                      "secondary-fixed-dim": "#3cddc7",
+                      "outline-variant": "#464555",
+                      "primary-fixed": "#e2dfff",
+                      "on-primary-container": "#dad7ff",
+                      "on-tertiary-container": "#ffd2be",
+                      "secondary-container": "#03c6b2",
+                      "primary-fixed-dim": "#c3c0ff",
+                      "secondary-fixed": "#62fae3",
+                      "surface-tint": "#c3c0ff",
+                      "on-tertiary": "#571f00",
+                      "on-secondary-fixed-variant": "#005047",
+                      "surface-container-low": "#1b1b24",
+                      "on-secondary": "#003731",
+                      "error": "#ffb4ab",
+                      "tertiary-fixed-dim": "#ffb695",
+                      "on-error-container": "#ffdad6",
+                      "on-background": "#e4e1ee",
+                      "tertiary": "#ffb695",
+                      "surface-container-high": "#2a2933",
+                      "surface-container": "#1f1f28",
+                      "tertiary-fixed": "#ffdbcc",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "on-surface": "#e4e1ee",
+                      "on-primary": "#1d00a5",
+                      "error-container": "#93000a",
+                      "on-tertiary-fixed-variant": "#7b2f00",
+                      "on-surface-variant": "#c7c4d8",
+                      "outline": "#918fa1"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "container-padding": "24px",
+                      "base": "8px",
+                      "gutter": "16px",
+                      "card-gap": "20px"
+              },
+              "fontFamily": {
+                      "headline-lg": ["Plus Jakarta Sans"],
+                      "label-caps": ["Inter"],
+                      "display-timer": ["Plus Jakarta Sans"],
+                      "headline-lg-mobile": ["Plus Jakarta Sans"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "display-timer": ["80px", {"lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-background selection:bg-secondary/30 min-h-screen flex flex-col">
+<!-- Atmospheric Mesh Gradients -->
+<div class="fixed inset-0 overflow-hidden pointer-events-none z-0">
+<div class="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-primary/10 rounded-full blur-[120px] animate-breathe"></div>
+<div class="absolute bottom-[-10%] right-[-10%] w-[60%] h-[60%] bg-secondary/5 rounded-full blur-[100px] animate-breathe" style="animation-delay: -2s;"></div>
+</div>
+<!-- TopAppBar -->
+<header class="fixed top-0 w-full z-50 bg-background/80 backdrop-blur-xl border-b border-white/10 flex justify-between items-center px-container-padding h-16 w-full">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary" data-icon="bubble_chart">bubble_chart</span>
+<h1 class="font-headline-lg-mobile text-headline-lg-mobile font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">PulseAI</h1>
+</div>
+<div class="w-8 h-8 rounded-full bg-surface-container-highest border border-white/10 overflow-hidden hover:opacity-80 transition-opacity cursor-pointer">
+<img alt="User" class="w-full h-full object-cover" data-alt="A high-quality 3D rendered avatar of a modern professional, featuring clean lines, soft studio lighting, and a minimalist aesthetic. The character has a friendly expression and is set against a soft, dark purple background that matches the sleek PulseAI interface. The overall style is contemporary and digital, with a focus on polished textures and sophisticated design elements." src="https://lh3.googleusercontent.com/aida-public/AB6AXuBgFQursU2mzz9AlOpOBG8GmhJBkeemvmu7j0yU-VGUTuJt4qRsz-XbodUYw3AI9EfQ63C4fBCHRJmlVIITlYaFaKxpyPkGPLHAtrY6WYoJ1HkjHi4Lqle8Bv3P0u547c3n5_tYSrmoMVnpTzeYoJnXBzOKlXEqq3Fw0tnD58BtYM8_UAsm_hca9Lc6ctHi56wK0u_52CovetKNdpmY7U5jQbYU2oeVna6o40235Wmwv4_9HNCaOgOP8h7bO-4HwNhWkTG7XLIQGiI">
+</div>
+</header>
+<!-- Main Content Canvas -->
+<main class="flex-grow flex flex-col items-center justify-center pt-24 pb-32 px-container-padding z-10 relative">
+<div class="w-full max-w-md space-y-12">
+<!-- Welcoming Message -->
+<div class="text-center space-y-2">
+<h2 class="font-headline-lg-mobile text-headline-lg-mobile text-on-background">Hola, ¿cómo nos sentimos hoy?</h2>
+<p class="font-body-md text-body-md text-on-surface-variant opacity-70">Ajustaremos tu ritmo según tu energía actual.</p>
+</div>
+<!-- Mood Selection Grid -->
+<div class="grid grid-cols-2 gap-card-gap">
+<!-- Mood 1: Low -->
+<button class="mood-card glass-panel rounded-xl p-6 flex flex-col items-center text-center gap-4 relative overflow-hidden group transition-all duration-300" onclick="selectMood(this)">
+<div class="bio-orb absolute w-16 h-16 bg-blue-500/40 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+<span class="material-symbols-outlined text-3xl text-on-surface-variant relative z-10" data-icon="bedtime">bedtime</span>
+<div class="space-y-1 relative z-10">
+<p class="font-label-caps text-label-caps uppercase tracking-widest text-on-background">Bajo</p>
+<p class="text-[13px] text-on-surface-variant leading-tight">Necesito calma</p>
+</div>
+</button>
+<!-- Mood 2: Calm -->
+<button class="mood-card glass-panel rounded-xl p-6 flex flex-col items-center text-center gap-4 relative overflow-hidden group transition-all duration-300" onclick="selectMood(this)">
+<div class="bio-orb absolute w-16 h-16 bg-secondary/40 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+<span class="material-symbols-outlined text-3xl text-on-surface-variant relative z-10" data-icon="filter_drama">filter_drama</span>
+<div class="space-y-1 relative z-10">
+<p class="font-label-caps text-label-caps uppercase tracking-widest text-on-background">Tranquilo</p>
+<p class="text-[13px] text-on-surface-variant leading-tight">Ritmo suave</p>
+</div>
+</button>
+<!-- Mood 3: Steady -->
+<button class="mood-card glass-panel rounded-xl p-6 flex flex-col items-center text-center gap-4 relative overflow-hidden group transition-all duration-300" onclick="selectMood(this)">
+<div class="bio-orb absolute w-16 h-16 bg-primary/40 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+<span class="material-symbols-outlined text-3xl text-on-surface-variant relative z-10" data-icon="bolt">bolt</span>
+<div class="space-y-1 relative z-10">
+<p class="font-label-caps text-label-caps uppercase tracking-widest text-on-background">Constante</p>
+<p class="text-[13px] text-on-surface-variant leading-tight">Enfoque fluido</p>
+</div>
+</button>
+<!-- Mood 4: High Energy -->
+<button class="mood-card glass-panel rounded-xl p-6 flex flex-col items-center text-center gap-4 relative overflow-hidden group transition-all duration-300" onclick="selectMood(this)">
+<div class="bio-orb absolute w-16 h-16 bg-orange-400/40 rounded-full top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"></div>
+<span class="material-symbols-outlined text-3xl text-on-surface-variant relative z-10" data-icon="rocket_launch">rocket_launch</span>
+<div class="space-y-1 relative z-10">
+<p class="font-label-caps text-label-caps uppercase tracking-widest text-on-background">Alto</p>
+<p class="text-[13px] text-on-surface-variant leading-tight">Energía plena</p>
+</div>
+</button>
+</div>
+<!-- Start Session Button -->
+<div class="flex flex-col items-center">
+<button class="w-full py-5 rounded-full bg-gradient-to-r from-primary to-secondary text-on-primary-fixed font-bold font-label-caps uppercase tracking-widest shadow-[0_0_40px_rgba(68,226,205,0.2)] hover:scale-[1.02] active:scale-95 transition-all duration-200">
+                    Empezar Sesión
+                </button>
+<p class="mt-6 text-xs text-on-surface-variant/50 font-label-caps tracking-wider">PULSEAI ADAPTIVE ENGINE V2.4</p>
+</div>
+</div>
+</main>
+<!-- BottomNavBar -->
+<nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-4 pb-6 pt-3 bg-background/80 backdrop-blur-xl border-t border-white/10 rounded-t-xl shadow-lg">
+<a class="flex flex-col items-center justify-center text-secondary bg-secondary/10 rounded-xl px-4 py-1 active:scale-90 transition-transform duration-200" href="#">
+<span class="material-symbols-outlined" data-icon="timer">timer</span>
+<span class="font-label-caps text-label-caps">Focus</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="history">history</span>
+<span class="font-label-caps text-label-caps">History</span>
+</a>
+<a class="flex flex-col items-center justify-center text-on-surface-variant opacity-60 hover:text-secondary transition-colors" href="#">
+<span class="material-symbols-outlined" data-icon="person">person</span>
+<span class="font-label-caps text-label-caps">Profile</span>
+</a>
+</nav>
+<script>
+        function selectMood(element) {
+            // Remove active class from all mood cards
+            document.querySelectorAll('.mood-card').forEach(card => {
+                card.classList.remove('active-mood');
+            });
+            
+            // Add active class to clicked card
+            element.classList.add('active-mood');
+            
+            // Subtle haptic feedback feel
+            element.style.transform = 'scale(0.95)';
+            setTimeout(() => {
+                element.style.transform = '';
+            }, 100);
+        }
+
+        // Initialize with steady mood selected
+        document.addEventListener('DOMContentLoaded', () => {
+            const steadyMood = document.querySelectorAll('.mood-card')[2];
+            if (steadyMood) selectMood(steadyMood);
+        });
+    </script>
+</body></html>

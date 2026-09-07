@@ -5,6 +5,7 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { GlassPanel } from '@/components/glass-panel';
 import { BreathingGlow } from '@/components/breathing-glow';
 import { DesignColors, DesignFonts, DesignSpacing, DesignTypography } from '@/constants/design';
+import { formatDuracionSegundos } from '@/lib/pomodoro';
 
 const ORB_SIZE = 260;
 
@@ -12,8 +13,8 @@ export function PauseScreen({
   fase,
   repeticionActual,
   repeticiones,
-  minutosTranscurridos,
-  minutosRestantes,
+  segundosTranscurridos,
+  segundosRestantes,
   onSeguir,
   onAccionRapida,
   accionRapidaLabel,
@@ -22,8 +23,8 @@ export function PauseScreen({
   fase: 'trabajo' | 'descanso';
   repeticionActual: number;
   repeticiones: number;
-  minutosTranscurridos: number;
-  minutosRestantes: number;
+  segundosTranscurridos: number;
+  segundosRestantes: number;
   onSeguir: () => void;
   onAccionRapida: () => void;
   accionRapidaLabel: string;
@@ -67,8 +68,8 @@ export function PauseScreen({
           <GlassPanel style={styles.messagePanel}>
             <Text style={styles.messageText}>
               {esTrabajo
-                ? `Llevas ${minutosTranscurridos} min concentrado en esta ronda. Quedan ${minutosRestantes} min de trabajo.`
-                : `Llevas ${minutosTranscurridos} min de descanso. Quedan ${minutosRestantes} min.`}
+                ? `Llevas ${formatDuracionSegundos(segundosTranscurridos)} concentrado en esta ronda. Quedan ${formatDuracionSegundos(segundosRestantes)} de trabajo.`
+                : `Llevas ${formatDuracionSegundos(segundosTranscurridos)} de descanso. Quedan ${formatDuracionSegundos(segundosRestantes)}.`}
             </Text>
           </GlassPanel>
         </View>

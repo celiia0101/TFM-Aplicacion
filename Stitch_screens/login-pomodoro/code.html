@@ -1,0 +1,224 @@
+<!DOCTYPE html><html class="dark" lang="es" style=""><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>PulseAI - Game On</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&amp;family=Inter:wght@400;500;600&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "inverse-surface": "#e4e1ee",
+                      "on-tertiary-container": "#ffd2be",
+                      "on-error": "#690005",
+                      "primary-container": "#4f46e5",
+                      "tertiary": "#ffb695",
+                      "inverse-on-surface": "#302f39",
+                      "surface-container": "#1f1f28",
+                      "on-tertiary-fixed-variant": "#7b2f00",
+                      "inverse-primary": "#4d44e3",
+                      "on-primary": "#1d00a5",
+                      "error": "#ffb4ab",
+                      "surface-container-high": "#2a2933",
+                      "on-secondary-fixed-variant": "#005047",
+                      "surface-container-lowest": "#0e0d16",
+                      "on-tertiary-fixed": "#351000",
+                      "surface-container-low": "#1b1b24",
+                      "surface-bright": "#393842",
+                      "outline": "#918fa1",
+                      "on-surface": "#e4e1ee",
+                      "error-container": "#93000a",
+                      "surface-tint": "#c3c0ff",
+                      "on-secondary-fixed": "#00201c",
+                      "on-primary-container": "#dad7ff",
+                      "on-tertiary": "#571f00",
+                      "on-surface-variant": "#c7c4d8",
+                      "surface": "#13121b",
+                      "secondary-container": "#03c6b2",
+                      "on-secondary-container": "#004d44",
+                      "secondary-fixed-dim": "#3cddc7",
+                      "secondary-fixed": "#62fae3",
+                      "on-primary-fixed": "#0f0069",
+                      "primary-fixed-dim": "#c3c0ff",
+                      "surface-variant": "#35343e",
+                      "on-primary-fixed-variant": "#3323cc",
+                      "on-error-container": "#ffdad6",
+                      "surface-container-highest": "#35343e",
+                      "primary-fixed": "#e2dfff",
+                      "on-background": "#e4e1ee",
+                      "surface-dim": "#13121b",
+                      "tertiary-fixed-dim": "#ffb695",
+                      "tertiary-container": "#a44100",
+                      "on-secondary": "#003731",
+                      "outline-variant": "#464555",
+                      "primary": "#c3c0ff",
+                      "tertiary-fixed": "#ffdbcc",
+                      "secondary": "#44e2cd",
+                      "background": "#13121b"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "gutter": "16px",
+                      "container-padding": "24px",
+                      "card-gap": "20px",
+                      "base": "8px"
+              },
+              "fontFamily": {
+                      "headline-lg-mobile": ["Plus Jakarta Sans"],
+                      "headline-lg": ["Plus Jakarta Sans"],
+                      "display-timer": ["Plus Jakarta Sans"],
+                      "label-caps": ["Inter"],
+                      "body-md": ["Inter"]
+              },
+              "fontSize": {
+                      "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                      "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                      "display-timer": ["80px", {"lineHeight": "80px", "letterSpacing": "-0.04em", "fontWeight": "700"}],
+                      "label-caps": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "600"}],
+                      "body-md": ["16px", {"lineHeight": "24px", "fontWeight": "400"}]
+              }
+            },
+          },
+        }
+    </script>
+<style>
+        .glass-panel {
+            background: rgba(31, 31, 40, 0.4);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        @keyframes breathe {
+            0%, 100% { transform: scale(1); opacity: 0.2; }
+            50% { transform: scale(1.1); opacity: 0.4; }
+        }
+        .breathing-aura {
+            animation: breathe 10s ease-in-out infinite;
+        }
+        .input-focus-effect:focus::placeholder {
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+        .shake-clear {
+            animation: shake 0.2s ease-in-out 3;
+        }
+        .brand-gradient {
+            background: linear-gradient(135deg, #c3c0ff 0%, #44e2cd 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface min-h-screen flex flex-col font-body-md overflow-hidden antialiased">
+<!-- Atmospheric Background -->
+<div class="fixed inset-0 z-0 pointer-events-none">
+<div class="breathing-aura absolute top-[-10%] right-[-10%] w-[80%] h-[80%] rounded-full bg-primary/10 blur-[120px]"></div>
+<div class="breathing-aura absolute bottom-[-5%] left-[-5%] w-[60%] h-[60%] rounded-full bg-secondary/5 blur-[100px]" style="animation-delay: -3s;"></div>
+</div>
+<main class="flex-1 flex flex-col relative z-10">
+<!-- Header/Hero Section -->
+<section class="flex-1 flex flex-col items-center justify-center px-container-padding text-center pt-8">
+<div class="mb-12">
+<span class="material-symbols-outlined text-secondary text-5xl mb-6 opacity-80" data-icon="bubble_chart">bubble_chart</span>
+<h1 class="font-headline-lg text-headline-lg font-bold tracking-tight mb-2">
+                ¡Hola!<br>
+<span class="brand-gradient">PomodoroAI</span> te espera.
+            </h1>
+</div>
+<!-- Refined Login Form -->
+<form class="w-full max-w-sm flex flex-col gap-6" id="yolo-form" onsubmit="event.preventDefault()">
+<div class="glass-panel rounded-3xl p-6 space-y-8">
+<!-- Username Input -->
+<div class="relative group">
+<label class="block font-label-caps text-[10px] text-on-surface-variant/60 text-left mb-2 tracking-[0.1em] uppercase px-1">Usuario</label>
+<input class="w-full bg-transparent border-b border-white/10 text-xl font-headline-lg p-0 pb-2 focus:ring-0 focus:border-secondary transition-all outline-none placeholder:text-on-surface-variant/20 input-focus-effect" id="user-input" placeholder="INGRESA TU ALIAS" type="text">
+</div>
+<!-- Password Input -->
+<div class="relative group">
+<div class="flex justify-between items-end mb-2">
+<label class="block font-label-caps text-[10px] text-on-surface-variant/60 text-left tracking-[0.1em] uppercase px-1">Contraseña</label>
+<div class="text-2xl transition-all duration-300" id="reaction-emoji">😶</div>
+</div>
+<input class="w-full bg-transparent border-b border-white/10 text-xl font-headline-lg p-0 pb-2 focus:ring-0 focus:border-secondary transition-all outline-none placeholder:text-on-surface-variant/20 input-focus-effect" id="pass-input" oninput="reactToPassword(this.value)" placeholder="••••••••" type="password">
+</div>
+<button class="w-full flex items-center justify-center gap-2 font-label-caps text-[10px] text-on-surface-variant/40 hover:text-secondary transition-colors uppercase tracking-[0.2em]" onclick="clearInputs()" type="button">
+<span class="material-symbols-outlined text-sm">refresh</span>
+                    Agitar para borrar
+                </button>
+</div>
+</form>
+</section>
+<!-- Footer Action -->
+<footer class="p-8 space-y-6">
+<div class="flex gap-8 justify-center">
+<button class="text-secondary font-semibold text-sm uppercase tracking-widest px-4 py-2 border-b-2 border-secondary transition-all" id="mode-login" onclick="switchMode('login')">Login</button>
+<button class="text-on-surface-variant/40 font-semibold text-sm uppercase tracking-widest px-4 py-2 transition-all hover:text-on-surface-variant/80" id="mode-reg" onclick="switchMode('reg')">Registro</button>
+</div>
+<button class="w-full bg-gradient-to-r from-primary to-secondary text-on-primary-fixed py-6 rounded-full text-lg font-bold uppercase tracking-widest shadow-[0_8px_32px_rgba(77,68,227,0.3)] hover:shadow-[0_12px_48px_rgba(77,68,227,0.5)] active:scale-95 transition-all" id="main-action">
+            Comenzar Partida
+        </button>
+<p class="font-label-caps text-[9px] text-center opacity-30 uppercase tracking-[0.2em] leading-relaxed">
+            Al continuar, aceptas nuestros términos de<br>servicio y política de bio-privacidad.
+        </p>
+</footer>
+</main>
+<script>
+    function reactToPassword(val) {
+        const emoji = document.getElementById('reaction-emoji');
+        if (val.length === 0) {
+            emoji.textContent = '😶';
+            emoji.style.transform = 'scale(1)';
+        } else if (val.length < 6) {
+            emoji.textContent = '🤨';
+            emoji.style.transform = 'scale(1.1)';
+        } else if (val.length < 10) {
+            emoji.textContent = '😎';
+            emoji.style.transform = 'scale(1.2)';
+        } else {
+            emoji.textContent = '🔥';
+            emoji.style.transform = 'scale(1.3) rotate(5deg)';
+        }
+    }
+
+    function clearInputs() {
+        const form = document.getElementById('yolo-form');
+        form.classList.add('shake-clear');
+        setTimeout(() => {
+            document.getElementById('user-input').value = '';
+            document.getElementById('pass-input').value = '';
+            reactToPassword('');
+            form.classList.remove('shake-clear');
+        }, 600);
+    }
+
+    function switchMode(mode) {
+        const login = document.getElementById('mode-login');
+        const reg = document.getElementById('mode-reg');
+        const btn = document.getElementById('main-action');
+        
+        if(mode === 'login') {
+            login.className = 'text-secondary font-semibold text-sm uppercase tracking-widest px-4 py-2 border-b-2 border-secondary transition-all';
+            reg.className = 'text-on-surface-variant/40 font-semibold text-sm uppercase tracking-widest px-4 py-2 transition-all hover:text-on-surface-variant/80';
+            btn.textContent = 'Comenzar Partida';
+        } else {
+            reg.className = 'text-secondary font-semibold text-sm uppercase tracking-widest px-4 py-2 border-b-2 border-secondary transition-all';
+            login.className = 'text-on-surface-variant/40 font-semibold text-sm uppercase tracking-widest px-4 py-2 transition-all hover:text-on-surface-variant/80';
+            btn.textContent = 'Crear Avatar';
+        }
+    }
+</script>
+
+
+</body></html>

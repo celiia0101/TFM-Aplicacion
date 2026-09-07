@@ -20,6 +20,7 @@ export type Resumen = {
   grafica: DiaGrafica[];
   sesionesRecientes: SesionReciente[];
   insight: string;
+  rachaDias: number;
 };
 
 export type Duracion = {
@@ -57,10 +58,22 @@ export function getTendencia(userId: number): Promise<{ tendencias: TendenciaEst
   return apiGet<{ tendencias: TendenciaEstado[] }>(`/pomodoro/tendencia/${userId}`);
 }
 
+export type Estadisticas = {
+  concentracionSemana: number;
+  tiempoEnfoqueSemanaMin: number;
+  tiempoEnfoqueSemanaAnteriorMin: number;
+};
+
+export function getEstadisticas(userId: number): Promise<Estadisticas> {
+  return apiGet<Estadisticas>(`/pomodoro/estadisticas/${userId}`);
+}
+
 export function getDuracion(userId: number, estadoId: number): Promise<Duracion> {
   return apiGet<Duracion>(`/pomodoro/duracion/${userId}/${estadoId}`);
 }
 
+// antes/despues vienen en SEGUNDOS (el centroide del modelo de IA), no en
+// minutos: formatear con formatDuracionSegundos antes de mostrarlos.
 export type CentroideInfo = {
   antes: number | null;
   despues: number;
@@ -71,9 +84,23 @@ export function logSesion(
   tiempoTrabajo: number,
   tiempoDescanso: number,
   estadoId: number,
-  ajusteMinutos = 0
+  ajusteMinutos = 0,
+  // Segundos reales transcurridos (antes de truncar a minutos enteros): el
+  // backend los usa para no perder precisión al alimentar el centroide del
+  // modelo de IA. tiempoTrabajo/tiempoDescanso (en minutos) siguen siendo lo
+  // que se guarda en el historial de sesiones.
+  tiempoTrabajoSeg?: number,
+  tiempoDescansoSeg?: number
 ): Promise<{ error: boolean; centroideInfo: CentroideInfo | null }> {
-  return apiPost('/pomodoro', { userId, tiempoTrabajo, tiempoDescanso, estadoId, ajusteMinutos });
+  return apiPost('/pomodoro', {
+    userId,
+    tiempoTrabajo,
+    tiempoDescanso,
+    estadoId,
+    ajusteMinutos,
+    tiempoTrabajoSeg,
+    tiempoDescansoSeg,
+  });
 }
 
 export function formatMinutos(totalMinutos: number): string {
@@ -81,6 +108,17 @@ export function formatMinutos(totalMinutos: number): string {
   const minutos = totalMinutos % 60;
   if (horas === 0) return `${minutos}m`;
   return `${horas}h ${minutos}m`;
+}
+
+// Como formatMinutos pero con precisión de segundos, para duraciones cortas
+// (una ronda, el tiempo transcurrido en pausa...) donde redondear a minutos
+// enteros puede mostrar "0 min" y ocultar que sí ha pasado tiempo real.
+export function formatDuracionSegundos(totalSegundos: number): string {
+  const mins = Math.floor(totalSegundos / 60);
+  const segs = Math.floor(totalSegundos % 60);
+  if (mins === 0) return `${segs} s`;
+  if (segs === 0) return `${mins} min`;
+  return `${mins} min ${segs} s`;
 }
 
 function esMismoDia(a: Date, b: Date): boolean {

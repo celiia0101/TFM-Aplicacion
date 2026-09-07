@@ -13,7 +13,13 @@ import { SessionSummary } from '@/components/session-summary';
 
 export type { MotivoSalida };
 
-type ResumenPendiente = { trabajo: number; descanso: number; motivo: MotivoSalida };
+type ResumenPendiente = {
+  trabajo: number;
+  descanso: number;
+  motivo: MotivoSalida;
+  totalTrabajo: number;
+  totalDescanso: number;
+};
 
 const RING_SIZE = 260;
 const STROKE_WIDTH = 4;
@@ -74,12 +80,26 @@ export function FocusTimer({
   // Evita registrar la ronda dos veces si el AppState y el intervalo del
   // contador se disparan casi a la vez.
   const salidaEnCursoRef = useRef(false);
+  // Evita que dos transiciones de fase se solapen (p.ej. pulsar "Saltar" muy
+  // rápido dos veces, o pulsarlo mientras la ronda anterior todavía se está
+  // guardando de forma asíncrona) — eso hacía que se saltaran rondas de más
+  // y dejaba la sesión en un estado inconsistente. Es un ref (no estado)
+  // porque se lee dentro de closures que no siempre están actualizadas
+  // (el intervalo, el listener de AppState); el estado de abajo es solo
+  // para deshabilitar los botones visualmente.
+  const transicionEnCursoRef = useRef(false);
+  const [botonesDeshabilitados, setBotonesDeshabilitados] = useState(false);
   // Mientras está en segundo plano, el intervalo normal deja de sumar
   // tiempo: al volver reconciliamos con el reloj de pared (ver más abajo).
   const enSegundoPlanoRef = useRef(false);
   const backgroundedAtRef = useRef<number | null>(null);
   const notifIdRef = useRef<string | null>(null);
   const reproducirAlarma = useAlarmSound();
+  // Acumula trabajo/descanso de TODAS las rondas de esta sesión (no se
+  // resetea entre rondas, a diferencia de elapsedRef). Sirve para que el
+  // resumen final muestre el tiempo y la concentración de la sesión
+  // completa, no solo de la última ronda que la cerró.
+  const totalSesionRef = useRef({ trabajo: 0, descanso: 0 });
 
   // Registra una ronda intermedia (no la última de la sesión): una fila =
   // un pomodoro completo, trabajo + descanso. Avisa también al servicio de
@@ -88,13 +108,15 @@ export function FocusTimer({
   // sesión entera, ver finalizarSesionCompleta).
   const registrarRonda = async () => {
     const { trabajo, descanso } = elapsedRef.current;
+    totalSesionRef.current.trabajo += trabajo;
+    totalSesionRef.current.descanso += descanso;
     const trabajoMin = Math.floor(trabajo / 60);
     const descansoMin = Math.floor(descanso / 60);
 
     // Evita ensuciar el historial con rondas paradas casi nada más empezar.
     if (trabajoMin + descansoMin >= 1) {
       try {
-        await logSesion(userId, trabajoMin, descansoMin, estadoId);
+        await logSesion(userId, trabajoMin, descansoMin, estadoId, 0, trabajo, descanso);
         onSesionRegistrada();
       } catch {
         // Si falla el guardado no bloqueamos al usuario.
@@ -114,20 +136,44 @@ export function FocusTimer({
     // principio del tick de abajo usa este mismo ref.
     if (salidaEnCursoRef.current) return;
     salidaEnCursoRef.current = true;
-    setResumenPendiente({ ...elapsedRef.current, motivo });
+    totalSesionRef.current.trabajo += elapsedRef.current.trabajo;
+    totalSesionRef.current.descanso += elapsedRef.current.descanso;
+    setResumenPendiente({
+      ...elapsedRef.current,
+      motivo,
+      totalTrabajo: totalSesionRef.current.trabajo,
+      totalDescanso: totalSesionRef.current.descanso,
+    });
     elapsedRef.current = { trabajo: 0, descanso: 0 };
   };
 
   const pasarDeFase = () => {
+    // Ignora llamadas solapadas: si ya hay una transición en marcha (incluido
+    // el hueco async de "registrarRonda" esperando la red), esta llamada no
+    // hace nada. Sin esto, pulsar "Saltar" varias veces seguidas —o que el
+    // intervalo dispare justo cuando el usuario también pulsa— podía saltar
+    // varias rondas de golpe y dejar repeticionActual por encima de
+    // repeticiones, rompiendo la pantalla.
+    if (transicionEnCursoRef.current) return;
+    transicionEnCursoRef.current = true;
+    setBotonesDeshabilitados(true);
+
     if (faseRef.current === 'trabajo') {
       setFase('descanso');
       setSegundosRestantes(duracionFaseSec.descanso);
+      transicionEnCursoRef.current = false;
+      setBotonesDeshabilitados(false);
       return;
     }
 
     if (repeticionActualRef.current < repeticiones) {
       // No es la última ronda: se registra sola y la sesión continúa.
       registrarRonda().then(() => {
+        transicionEnCursoRef.current = false;
+        setBotonesDeshabilitados(false);
+        // La sesión pudo haber terminado por otro camino (Stop, interrupción)
+        // mientras esta ronda intermedia todavía se estaba guardando.
+        if (salidaEnCursoRef.current) return;
         setRepeticionActual((r) => r + 1);
         setFase('trabajo');
         setSegundosRestantes(duracionFaseSec.trabajo);
@@ -135,6 +181,8 @@ export function FocusTimer({
     } else {
       // Última ronda: aquí termina la sesión completa.
       finalizarSesionCompleta('completada');
+      transicionEnCursoRef.current = false;
+      setBotonesDeshabilitados(false);
     }
   };
 
@@ -208,7 +256,6 @@ export function FocusTimer({
         // Volvió antes de tiempo durante el trabajo: aquí sí se rompió la
         // concentración. Se cuenta el tiempo real hasta este momento.
         elapsedRef.current.trabajo += segundosFuera;
-        salidaEnCursoRef.current = true;
         finalizarSesionCompleta('interrumpida');
         return;
       }
@@ -234,7 +281,6 @@ export function FocusTimer({
   };
 
   const handleStop = () => {
-    salidaEnCursoRef.current = true;
     finalizarSesionCompleta('detenida');
   };
 
@@ -245,7 +291,6 @@ export function FocusTimer({
   // que el botón "Saltar" normal.
   const handleAccionRapidaPausa = () => {
     if (fase === 'trabajo') {
-      salidaEnCursoRef.current = true;
       finalizarSesionCompleta('pausada');
       return;
     }
@@ -263,7 +308,15 @@ export function FocusTimer({
     if (trabajoMin + descansoMin < 1) return null;
 
     try {
-      const respuesta = await logSesion(userId, trabajoMin, descansoMin, estadoId, ajusteMinutos);
+      const respuesta = await logSesion(
+        userId,
+        trabajoMin,
+        descansoMin,
+        estadoId,
+        ajusteMinutos,
+        resumenPendiente.trabajo,
+        resumenPendiente.descanso
+      );
       onSesionRegistrada();
       return respuesta.centroideInfo;
     } catch {
@@ -293,8 +346,8 @@ export function FocusTimer({
         <SessionSummary
           motivo={resumenPendiente.motivo}
           estadoAnimo={estadoAnimo}
-          tiempoTrabajoMin={Math.floor(resumenPendiente.trabajo / 60)}
-          tiempoDescansoMin={Math.floor(resumenPendiente.descanso / 60)}
+          tiempoTrabajoSeg={resumenPendiente.totalTrabajo}
+          tiempoDescansoSeg={resumenPendiente.totalDescanso}
           onFinalizar={handleEnviarResumen}
           onVerEstadisticas={handleVerEstadisticasResumen}
           onContinuar={handleContinuarResumen}
@@ -310,8 +363,8 @@ export function FocusTimer({
           fase={fase}
           repeticionActual={repeticionActual}
           repeticiones={repeticiones}
-          minutosTranscurridos={Math.floor(elapsedRef.current[fase] / 60)}
-          minutosRestantes={Math.ceil(segundosRestantes / 60)}
+          segundosTranscurridos={elapsedRef.current[fase]}
+          segundosRestantes={segundosRestantes}
           onSeguir={() => setPausado(false)}
           onAccionRapida={handleAccionRapidaPausa}
           accionRapidaLabel={fase === 'trabajo' ? 'Finalizar Sesión' : 'Volver al Trabajo'}
@@ -368,7 +421,11 @@ export function FocusTimer({
       </View>
 
       <View style={styles.controls}>
-        <Pressable style={styles.roundButtonGhost} onPress={handleStop}>
+        <Pressable
+          style={[styles.roundButtonGhost, botonesDeshabilitados && styles.roundButtonDisabled]}
+          onPress={handleStop}
+          disabled={botonesDeshabilitados}
+        >
           <MaterialIcons name="stop" size={22} color={DesignColors.onSurfaceVariant} />
         </Pressable>
 
@@ -383,7 +440,11 @@ export function FocusTimer({
           </LinearGradient>
         </Pressable>
 
-        <Pressable style={styles.roundButtonGhost} onPress={handleSkip}>
+        <Pressable
+          style={[styles.roundButtonGhost, botonesDeshabilitados && styles.roundButtonDisabled]}
+          onPress={handleSkip}
+          disabled={botonesDeshabilitados}
+        >
           <MaterialIcons name="skip-next" size={22} color={DesignColors.onSurfaceVariant} />
         </Pressable>
       </View>
@@ -455,6 +516,9 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(255,255,255,0.03)',
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)',
+  },
+  roundButtonDisabled: {
+    opacity: 0.4,
   },
   playButton: {
     width: 80,
