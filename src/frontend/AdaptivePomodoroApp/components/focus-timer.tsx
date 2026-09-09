@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialIcons } from '@expo/vector-icons';
 
 import { DesignColors, DesignFonts, DesignSpacing, DesignTypography } from '@/constants/design';
-import { CentroideInfo, logSesion, MotivoSalida } from '@/lib/pomodoro';
+import { CentroideInfo, formatDuracionSegundos, logSesion, MotivoSalida } from '@/lib/pomodoro';
 import { useAlarmSound } from '@/hooks/use-alarm-sound';
 import { programarAlarmaFase, cancelarAlarma } from '@/lib/phase-alarm';
 import { PauseScreen } from '@/components/pause-screen';
@@ -42,6 +42,8 @@ export function FocusTimer({
   estadoAnimo,
   tiempoTrabajoMin,
   tiempoDescansoMin,
+  tiempoTrabajoSeg,
+  tiempoDescansoSeg,
   repeticiones,
   sesionesHoy,
   onSesionRegistrada,
@@ -53,13 +55,21 @@ export function FocusTimer({
   estadoAnimo: string;
   tiempoTrabajoMin: number;
   tiempoDescansoMin: number;
+  tiempoTrabajoSeg: number;
+  tiempoDescansoSeg: number;
   repeticiones: number;
   sesionesHoy: number;
   onSesionRegistrada: () => void;
   onSalir: (motivo: MotivoSalida) => void;
   onVerEstadisticas: () => void;
 }) {
-  const duracionFaseSec = useRef({ trabajo: tiempoTrabajoMin * 60, descanso: tiempoDescansoMin * 60 }).current;
+  // La cuenta atrás usa la duración EXACTA del centroide (segundos), no los
+  // minutos redondeados del badge — si no, el temporizador podía arrancar
+  // hasta ~30s de más/de menos respecto a lo que de verdad recomienda la IA.
+  const duracionFaseSec = useRef({
+    trabajo: tiempoTrabajoSeg ?? tiempoTrabajoMin * 60,
+    descanso: tiempoDescansoSeg ?? tiempoDescansoMin * 60,
+  }).current;
 
   const [repeticionActual, setRepeticionActual] = useState(1);
   const [fase, setFase] = useState<Fase>('trabajo');
@@ -116,7 +126,16 @@ export function FocusTimer({
     // Evita ensuciar el historial con rondas paradas casi nada más empezar.
     if (trabajoMin + descansoMin >= 1) {
       try {
-        await logSesion(userId, trabajoMin, descansoMin, estadoId, 0, trabajo, descanso);
+        await logSesion(
+          userId,
+          trabajoMin,
+          descansoMin,
+          estadoId,
+          0,
+          trabajo,
+          descanso,
+          totalSesionRef.current.trabajo + totalSesionRef.current.descanso
+        );
         onSesionRegistrada();
       } catch {
         // Si falla el guardado no bloqueamos al usuario.
@@ -315,7 +334,9 @@ export function FocusTimer({
         estadoId,
         ajusteMinutos,
         resumenPendiente.trabajo,
-        resumenPendiente.descanso
+        resumenPendiente.descanso,
+        resumenPendiente.totalTrabajo + resumenPendiente.totalDescanso,
+        repeticionActual
       );
       onSesionRegistrada();
       return respuesta.centroideInfo;
@@ -347,7 +368,7 @@ export function FocusTimer({
           motivo={resumenPendiente.motivo}
           estadoAnimo={estadoAnimo}
           tiempoTrabajoSeg={resumenPendiente.totalTrabajo}
-          tiempoDescansoSeg={resumenPendiente.totalDescanso}
+          tiempoPlaneadoSeg={repeticiones * (duracionFaseSec.trabajo + duracionFaseSec.descanso)}
           onFinalizar={handleEnviarResumen}
           onVerEstadisticas={handleVerEstadisticasResumen}
           onContinuar={handleContinuarResumen}
@@ -416,7 +437,7 @@ export function FocusTimer({
       <View style={styles.badge}>
         <MaterialIcons name="auto-awesome" size={16} color={DesignColors.secondary} />
         <Text style={styles.badgeText}>
-          Ajustado por IA ({estadoAnimo}): {tiempoTrabajoMin} min de trabajo
+          Ajustado por IA ({estadoAnimo}): {formatDuracionSegundos(duracionFaseSec.trabajo)} de trabajo
         </Text>
       </View>
 

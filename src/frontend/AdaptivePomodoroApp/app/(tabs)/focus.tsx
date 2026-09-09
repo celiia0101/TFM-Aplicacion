@@ -23,6 +23,8 @@ type Sesion = {
   estadoAnimo: string;
   tiempoTrabajo: number;
   tiempoDescanso: number;
+  tiempoTrabajoSeg: number;
+  tiempoDescansoSeg: number;
   repeticiones: number;
 };
 
@@ -80,6 +82,8 @@ export default function FocusScreen() {
         estadoAnimo: estado.estadoAnimo,
         tiempoTrabajo: duracion.tiempoTrabajo,
         tiempoDescanso: duracion.tiempoDescanso,
+        tiempoTrabajoSeg: duracion.tiempoTrabajoSeg,
+        tiempoDescansoSeg: duracion.tiempoDescansoSeg,
         repeticiones,
       });
     } catch (err) {
@@ -101,6 +105,8 @@ export default function FocusScreen() {
             estadoAnimo={sesionActiva.estadoAnimo}
             tiempoTrabajoMin={sesionActiva.tiempoTrabajo}
             tiempoDescansoMin={sesionActiva.tiempoDescanso}
+            tiempoTrabajoSeg={sesionActiva.tiempoTrabajoSeg}
+            tiempoDescansoSeg={sesionActiva.tiempoDescansoSeg}
             repeticiones={sesionActiva.repeticiones}
             sesionesHoy={sesionesHoy}
             onSesionRegistrada={() => setSesionesHoy((n) => n + 1)}

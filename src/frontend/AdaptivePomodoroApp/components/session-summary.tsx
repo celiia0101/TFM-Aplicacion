@@ -54,7 +54,7 @@ export function SessionSummary({
   motivo,
   estadoAnimo,
   tiempoTrabajoSeg,
-  tiempoDescansoSeg,
+  tiempoPlaneadoSeg,
   onFinalizar,
   onVerEstadisticas,
   onContinuar,
@@ -62,7 +62,7 @@ export function SessionSummary({
   motivo: MotivoSalida;
   estadoAnimo: string;
   tiempoTrabajoSeg: number;
-  tiempoDescansoSeg: number;
+  tiempoPlaneadoSeg: number;
   onFinalizar: (ajusteMinutos: number) => Promise<CentroideInfo | null>;
   onVerEstadisticas: (ajusteMinutos: number) => void;
   onContinuar: () => void;
@@ -75,13 +75,13 @@ export function SessionSummary({
   // sin info de centroide (p.ej. el servicio de IA no respondió).
   const [resultado, setResultado] = useState<CentroideInfo | null | undefined>(undefined);
 
-  // La concentración compara contra el tiempo TOTAL de la sesión (todas las
-  // rondas), no solo la última — igual que el resto de la app (Home usa el
-  // mismo criterio trabajo / (trabajo + descanso)).
+  // La concentración compara el trabajo real contra el tiempo TOTAL
+  // PLANEADO (rondas × duración recomendada de trabajo+descanso), no contra
+  // lo que de verdad ocurrió: si el usuario para a medias, debe reflejar
+  // cuánto de la sesión prevista completó de verdad, no un 100% artificial
+  // por no haber llegado a descansar nunca.
   const concentracionSesion =
-    tiempoTrabajoSeg + tiempoDescansoSeg > 0
-      ? Math.round((tiempoTrabajoSeg / (tiempoTrabajoSeg + tiempoDescansoSeg)) * 100)
-      : 0;
+    tiempoPlaneadoSeg > 0 ? Math.round((tiempoTrabajoSeg / tiempoPlaneadoSeg) * 100) : 0;
 
   const handleFinalizar = async () => {
     setEnviando(true);
@@ -110,7 +110,11 @@ export function SessionSummary({
               )}
               <Text style={styles.centroideDespues}>{formatDuracionSegundos(resultado.despues)}</Text>
             </View>
-            <Text style={styles.cardCaption}>Para el ánimo &quot;{estadoAnimo}&quot;, según tu encuesta.</Text>
+            <Text style={styles.cardCaption}>
+              {resultado.coincideConElegido
+                ? `Para el ánimo "${estadoAnimo}", según tu encuesta.`
+                : `Esta sesión se pareció más a tu ritmo de "${resultado.estadoAnimoReal}", así que ajustamos ese en su lugar.`}
+            </Text>
           </GlassPanel>
         ) : (
           <Text style={styles.subheadline}>Tu sesión quedó guardada.</Text>

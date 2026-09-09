@@ -45,25 +45,49 @@ function indiceClusterParaEstado(clusters, estadoId) {
   return ordenarClustersPorDuracion(clusters)[posicion];
 }
 
+const NOMBRE_POR_ESTADO = { 1: 'Bien', 2: 'Estresado', 3: 'Puedo con Todo', 4: 'Cansado' };
+
+// La traducción inversa: dado el índice de clúster que realmente actualizó
+// partial_fit (no siempre coincide con el ánimo que eligió el usuario, ver
+// más abajo), a qué ID_ESTADO corresponde ahora mismo.
+function estadoIdParaIndiceCluster(clusters, indiceCluster) {
+  const orden = ordenarClustersPorDuracion(clusters);
+  const posicion = orden.indexOf(indiceCluster);
+  if (posicion === -1) return undefined;
+  const entrada = Object.entries(POSICION_POR_ESTADO).find(([, pos]) => pos === posicion);
+  return entrada ? Number(entrada[0]) : undefined;
+}
+
 router.get('/duracion/:userId/:estadoId', async (req, res) => {
   const { userId, estadoId } = req.params;
 
+  // tiempoTrabajo (minutos redondeados) se mantiene por compatibilidad y
+  // para el badge "Ajustado por IA: X min"; tiempoTrabajoSeg es la duración
+  // EXACTA del centroide, y es la que debe usar el temporizador para que la
+  // cuenta atrás no arranque con hasta ~30s de más/de menos por redondeo.
   let tiempoTrabajo;
+  let tiempoTrabajoSeg;
   try {
     const clusters = await obtenerCentroides(userId);
     const indiceCentroide = indiceClusterParaEstado(clusters, estadoId);
     const centroide = clusters[indiceCentroide];
     if (!centroide) throw new Error(`No existe centroide para el estado ${estadoId}`);
-    // El modelo de IA guarda sus centroides en SEGUNDOS (para no perder
-    // precisión frente a minutos enteros); aquí convertimos a minutos, que es
-    // lo que espera el frontend.
-    tiempoTrabajo = Math.max(1, Math.round(centroide[0] / 60));
+    // El modelo de IA guarda sus centroides en SEGUNDOS.
+    tiempoTrabajoSeg = Math.max(1, Math.round(centroide[0]));
+    tiempoTrabajo = Math.max(1, Math.round(tiempoTrabajoSeg / 60));
   } catch (err) {
     console.error('No se pudo consultar el servicio de IA, uso valor por defecto:', err.message);
     tiempoTrabajo = DURACION_DEFECTO_POR_ESTADO[estadoId] ?? 25;
+    tiempoTrabajoSeg = tiempoTrabajo * 60;
   }
 
-  return res.status(200).json({ error: false, tiempoTrabajo, tiempoDescanso: DESCANSO_FIJO_MIN });
+  return res.status(200).json({
+    error: false,
+    tiempoTrabajo,
+    tiempoTrabajoSeg,
+    tiempoDescanso: DESCANSO_FIJO_MIN,
+    tiempoDescansoSeg: DESCANSO_FIJO_MIN * 60,
+  });
 });
 
 router.get('/estados-animo', async (_req, res) => {
@@ -194,6 +218,8 @@ router.post('/', async (req, res) => {
     ajusteMinutos = 0,
     tiempoTrabajoSeg,
     tiempoDescansoSeg,
+    tiempoTotalSesionSeg,
+    numeroRondas = 1,
   } = req.body;
 
   if (!userId || !tiempoTrabajo) {
@@ -206,6 +232,12 @@ router.post('/', async (req, res) => {
   // del frontend), caemos de vuelta a los minutos truncados.
   const trabajoSegExacto = typeof tiempoTrabajoSeg === 'number' ? tiempoTrabajoSeg : tiempoTrabajo * 60;
   const descansoSegExacto = typeof tiempoDescansoSeg === 'number' ? tiempoDescansoSeg : tiempoDescanso * 60;
+  // El modelo espera como "tiempo total" el de TODA la sesión (todas las
+  // rondas), no el de esta ronda sola — si un pomodoro es 25+10 min a 4
+  // rondas, son 140 min, no los 35 de la última ronda. Si el cliente no lo
+  // manda, caemos de vuelta al de esta ronda (mejor que nada).
+  const totalSesionSegExacto =
+    typeof tiempoTotalSesionSeg === 'number' ? tiempoTotalSesionSeg : trabajoSegExacto + descansoSegExacto;
 
   try {
     await pool.query(
@@ -232,35 +264,71 @@ router.post('/', async (req, res) => {
         // se guardó arriba, solo se pierde la actualización del modelo).
         const clustersPrevios = await obtenerCentroides(userId);
         const indiceCentroide = indiceClusterParaEstado(clustersPrevios, estadoId);
-        const centroidePrevioRaw = clustersPrevios[indiceCentroide];
-        // Los centroides del modelo ya están en SEGUNDOS: se lo pasamos tal
-        // cual al frontend (que sabe formatear "min y seg") en vez de
-        // redondear aquí a minutos enteros, que escondería el cambio real
-        // cuando el centroide se mueve solo unos segundos.
-        const centroidePrevio = centroidePrevioRaw ? Math.round(centroidePrevioRaw[0]) : null;
 
-        // Igual que el tiempo real, el ajuste de la encuesta viene en minutos
-        // y hay que pasarlo a segundos antes de sumarlo. Un pomodoro de al
-        // menos 1 minuto (60s) para no mandar centroides absurdos si el
-        // ajuste negativo dejara el valor en 0 o menos.
-        const pomodoroAjustadoSeg = Math.max(60, Math.round(trabajoSegExacto + ajusteMinutos * 60));
+        // El ajuste de la encuesta viene en minutos y hay que pasarlo a
+        // segundos antes de sumarlo. Se aplica tanto al pomodoro como al
+        // tiempo total: si el usuario dice "más largo/corto", ese cambio
+        // también debe reflejarse en la duración total de la sesión, no
+        // solo en la duración de trabajo — si no, el total quedaba fijo
+        // aunque la encuesta pidiera sesiones más largas o más cortas.
+        // El ajuste es POR RONDA (así lo entiende la encuesta), así que para
+        // el total hay que multiplicarlo por las rondas reales de esta
+        // sesión — sumarlo una sola vez apenas se nota en sesiones largas.
+        // Mínimo de 1 minuto (60s) en ambos para no mandar valores absurdos
+        // si el ajuste negativo los dejara en 0 o menos.
+        const ajusteSeg = ajusteMinutos * 60;
+        const pomodoroAjustadoSeg = Math.max(60, Math.round(trabajoSegExacto + ajusteSeg));
+        const totalAjustadoSeg = Math.max(60, Math.round(totalSesionSegExacto + ajusteSeg * numeroRondas));
         const resultado = await notificarFinSesion(userId, {
           pomodoro: pomodoroAjustadoSeg,
-          totalTime: Math.round(trabajoSegExacto + descansoSegExacto),
+          totalTime: totalAjustadoSeg,
           estresNvl: indiceCentroide,
         });
-        const nuevoCentroide = resultado.clusters?.[indiceCentroide];
+
+        // partial_fit() de MiniBatchKMeans mueve el clúster más cercano por
+        // distancia real, que no tiene por qué ser el del ánimo elegido (ver
+        // indiceClusterParaEstado). Comparamos antes/después de los 4
+        // clústeres para saber cuál se movió DE VERDAD, y registramos la
+        // tendencia ahí — si no, el histórico de "Bien" podía quedarse
+        // congelado mientras el cambio real caía, sin dejar rastro, en el
+        // clúster de otro ánimo.
+        let indiceActualizado = indiceCentroide;
+        if (Array.isArray(resultado.clusters)) {
+          const indiceMovido = resultado.clusters.findIndex((c, i) => {
+            const previo = clustersPrevios[i];
+            return previo && (c[0] !== previo[0] || c[1] !== previo[1]);
+          });
+          if (indiceMovido !== -1) indiceActualizado = indiceMovido;
+        }
+
+        const nuevoCentroide = resultado.clusters?.[indiceActualizado];
         if (nuevoCentroide) {
+          const coincideConElegido = indiceActualizado === indiceCentroide;
+          const estadoIdReal = coincideConElegido
+            ? Number(estadoId)
+            : (estadoIdParaIndiceCluster(clustersPrevios, indiceActualizado) ?? Number(estadoId));
+
+          // "antes" es del clúster que de verdad cambió (no siempre el
+          // elegido), para que el "antes → después" que ve el usuario sea
+          // coherente con el ánimo que se está mostrando.
+          const centroidePrevioRaw = clustersPrevios[indiceActualizado];
+          const centroidePrevio = centroidePrevioRaw ? Math.round(centroidePrevioRaw[0]) : null;
+
           // M_POMODORO.POMODORO (para la tendencia del Perfil) se muestra en
           // minutos, así que convertimos de vuelta desde los segundos del modelo.
           const centroideNuevoExactoMin = Number((nuevoCentroide[0] / 60).toFixed(2));
           await pool.query('INSERT INTO M_POMODORO (ID_USER, ID_ESTADO, FECHA, POMODORO) VALUES (?, ?, NOW(), ?)', [
             userId,
-            estadoId,
+            estadoIdReal,
             centroideNuevoExactoMin,
           ]);
-          // También en segundos, por la misma razón que centroidePrevio.
-          centroideInfo = { antes: centroidePrevio, despues: Math.round(nuevoCentroide[0]) };
+
+          centroideInfo = {
+            antes: centroidePrevio,
+            despues: Math.round(nuevoCentroide[0]),
+            coincideConElegido,
+            estadoAnimoReal: coincideConElegido ? null : (NOMBRE_POR_ESTADO[estadoIdReal] ?? null),
+          };
         }
       } catch (err) {
         console.error('No se pudo actualizar el modelo de IA:', err.message);

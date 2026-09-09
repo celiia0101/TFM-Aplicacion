@@ -26,6 +26,11 @@ export type Resumen = {
 export type Duracion = {
   tiempoTrabajo: number;
   tiempoDescanso: number;
+  // Duración exacta del centroide, en segundos: úsala para arrancar el
+  // temporizador (tiempoTrabajo/tiempoDescanso son minutos redondeados,
+  // solo para mostrar en el badge).
+  tiempoTrabajoSeg: number;
+  tiempoDescansoSeg: number;
 };
 
 export type EstadoAnimo = {
@@ -74,9 +79,18 @@ export function getDuracion(userId: number, estadoId: number): Promise<Duracion>
 
 // antes/despues vienen en SEGUNDOS (el centroide del modelo de IA), no en
 // minutos: formatear con formatDuracionSegundos antes de mostrarlos.
+//
+// El modelo agrupa por comportamiento real: la sesión puede parecerse más al
+// patrón de OTRO ánimo que al elegido, y entonces es ESE centroide el que se
+// actualiza. coincideConElegido indica si el clúster mostrado es el del
+// ánimo que el usuario eligió; si no, estadoAnimoReal trae el nombre del que
+// sí se actualizó, para poder avisarlo en vez de dar la impresión de que "no
+// pasó nada".
 export type CentroideInfo = {
   antes: number | null;
   despues: number;
+  coincideConElegido: boolean;
+  estadoAnimoReal: string | null;
 };
 
 export function logSesion(
@@ -85,12 +99,22 @@ export function logSesion(
   tiempoDescanso: number,
   estadoId: number,
   ajusteMinutos = 0,
-  // Segundos reales transcurridos (antes de truncar a minutos enteros): el
-  // backend los usa para no perder precisión al alimentar el centroide del
-  // modelo de IA. tiempoTrabajo/tiempoDescanso (en minutos) siguen siendo lo
-  // que se guarda en el historial de sesiones.
+  // Segundos reales transcurridos EN ESTA RONDA (antes de truncar a minutos
+  // enteros): el backend los usa para no perder precisión al alimentar la
+  // duración de trabajo del centroide. tiempoTrabajo/tiempoDescanso (en
+  // minutos) siguen siendo lo que se guarda en el historial de sesiones.
   tiempoTrabajoSeg?: number,
-  tiempoDescansoSeg?: number
+  tiempoDescansoSeg?: number,
+  // Acumulado de TODA la sesión hasta ahora (todas las rondas, trabajo +
+  // descanso), en segundos: es lo que el modelo de IA espera como "tiempo
+  // total", no el de una sola ronda — si un pomodoro es de 25+10 min y van 4
+  // rondas, esto son 140 min (8400 s), no los 35 min de la última ronda.
+  tiempoTotalSesionSeg?: number,
+  // Cuántas rondas componen tiempoTotalSesionSeg: el ajuste de la encuesta
+  // ("más corto/más largo") es por ronda, así que al aplicarlo al tiempo
+  // TOTAL hay que multiplicarlo por las rondas reales de esta sesión, no
+  // sumarlo una sola vez — si no, el ajuste apenas se nota en sesiones largas.
+  numeroRondas = 1
 ): Promise<{ error: boolean; centroideInfo: CentroideInfo | null }> {
   return apiPost('/pomodoro', {
     userId,
@@ -100,6 +124,8 @@ export function logSesion(
     ajusteMinutos,
     tiempoTrabajoSeg,
     tiempoDescansoSeg,
+    tiempoTotalSesionSeg,
+    numeroRondas,
   });
 }
 
